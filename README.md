@@ -10,7 +10,7 @@ It reads Zelle notification emails and the studio's Chase bank export, keeps onl
 | **Email Reader** | Reads only Zelle emails whose format code doesn't recognise | Its payer name and amount count only if they appear word for word in the email; scam emails are blocked by code first |
 | **Reply handler** | Reads a student's answer ("I already paid", "can I pay Friday?") | `get_balance`, `recent_payments`, `find_payments_by_amount`, `record_promise`, `flag_for_owner`. No tool can mark anyone as paid |
 
-Built for DNA Dance Academy (private lessons $160, group drop-in $70, Zelle to `info@dnadanceacademy.com`).
+Built by Denys Drozdyuk, founder and owner of DNA Dance Academy (a real ballroom school in New York), for that studio (private lessons $160, group drop-in $70, Zelle to `info@dnadanceacademy.com`).
 Model: `gpt-6-luna` through the course Portkey key.
 
 ---
@@ -88,7 +88,7 @@ PRICE_GROUP=70
 - **Privacy:** the model sees `C007`-style IDs, not names, phones, emails or non-Zelle bank rows (exception: the Email Reader reads the payer name in an unusual-format Zelle email). Names are put back in on your computer.
 - **Prompt injection:** a code pre-screen blocks obvious attacks at zero tokens; replies are wrapped as untrusted data; the course provider's filter is a third layer; and the Reply agent has no tool that changes balances.
 - **Invented facts:** amounts come only from code. Drafts may only use `{amount}`; reply drafts with dollar figures no tool returned are scrubbed.
-- **Runaway cost:** hard daily token cap (400k; each call reserves an upper bound first and calls run one at a time), 20 calls per minute, 6 tool steps per agent, 12k output tokens per call. All are in `app/config.py`.
+- **Runaway cost:** conservative daily token budget guard (400k; each call reserves an upper bound first and calls run one at a time), 20 calls per minute, 6 tool steps per agent, 12k output tokens per call. All are in `app/config.py`.
 
 ## Tests and scripts
 

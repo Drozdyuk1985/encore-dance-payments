@@ -73,12 +73,12 @@ footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid va
     <h1>EN<span>CORE</span></h1>
     <p class="one">An AI payment desk that finds the lesson payments students forgot to send, and drafts the friendly reminder the studio owner keeps forgetting to write.</p>
     <div class="meta">
-      <b>Author</b><span>Denys Drozdyuk</span>
+      <b>Author</b><span>Denys Drozdyuk, founder and owner of DNA Dance Academy</span>
       <b>GitHub repo</b><span><a href="https://github.com/Drozdyuk1985/encore-dance-payments">https://github.com/Drozdyuk1985/encore-dance-payments</a> (public)</span>
       <b>Clone</b><span><code style="background:#222;color:#ffc2dc">git clone https://github.com/Drozdyuk1985/encore-dance-payments.git</code></span>
       <b>App</b><span>Runs locally from the repo (<code style="background:#222;color:#ffc2dc">python run.py</code>, under a minute to start). Not hosted online. It reads private bank data, so local is the safer design.</span>
       <b>Model</b><span>gpt-6-luna through the course Portkey key</span>
-      <b>Built for</b><span>DNA Dance Academy (my studio) and any small business paid by Zelle</span>
+      <b>Built for</b><span><b style="color:#fff">My own studio, DNA Dance Academy</b>: a real ballroom dance school I founded and run on New York's Upper West Side (<a href="https://www.dnadanceacademy.com">dnadanceacademy.com</a>). Usable by any small business paid by Zelle.</span>
     </div>
   </div>
 </section>
@@ -90,7 +90,8 @@ footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid va
 <!-- 2. MOTIVATION -->
 <h2><span class="n">2</span>Motivation</h2>
 <h3>Who has this problem</h3>
-<p>I run DNA Dance Academy. Group classes (Minis, Level 1 and Level 2) are sold by semester ($890–$1,500), mostly paid online through our Wix website, or families can come as $70 drop-ins. Semester tuition only needs chasing at the start of a semester; once it's paid, nothing is due until the next one. The weekly follow-up problem is the rest: private lessons ($160), group drop-ins ($70), prepaid packages and an unlimited weekly plan ($500/week). Students and parents pay by <b>Zelle</b> to the studio email, usually after class, and often they forget. Nobody sends an invoice. The money shows up as a line in the Chase business account, with no link to which lesson it paid for. Sometimes it's sent by a spouse, a parent or the student's company, under a name I don't recognize. One Zelle often covers two privates or three group classes.</p>
+<div class="callout"><b>This is a real business problem, not a hypothetical one.</b> I founded DNA Dance Academy and run it today, so I am both the builder and the real user. The problem, the workflow (Apple Notes, Zelle emails, the Chase export), the timed test and the feedback in this report all come from my studio. Only the <b>screenshots</b> use a fictional "Sample studio", so that no real client names or bank data appear in this report or on GitHub.</div>
+<p>I founded and run DNA Dance Academy, a ballroom dance school in New York. Group classes (Minis, Level 1 and Level 2) are sold by semester ($890–$1,500), mostly paid online through our Wix website, or families can come as $70 drop-ins. Semester tuition only needs chasing at the start of a semester; once it's paid, nothing is due until the next one. The weekly follow-up problem is the rest: private lessons ($160), group drop-ins ($70), prepaid packages and an unlimited weekly plan ($500/week). Students and parents pay by <b>Zelle</b> to the studio email, usually after class, and often they forget. Nobody sends an invoice. The money shows up as a line in the Chase business account, with no link to which lesson it paid for. Sometimes it's sent by a spouse, a parent or the student's company, under a name I don't recognize. One Zelle often covers two privates or three group classes.</p>
 <p>So after a full day of teaching, the "accounting system" is Apple Notes and my memory. A note called <b>"Running schedule"</b> holds the upcoming week, including the final private-lesson schedule. At the top of my <b>"To Do"</b> note I keep who still owes me, for example "Alex $160" (a made-up name). Every evening I scroll Zelle emails, cross-check them against the schedule, update that list by hand, and text people one by one. When I'm tired, I don't, and the payment quietly never arrives.</p>
 
 <h3>What it costs today</h3>
@@ -264,7 +265,7 @@ footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid va
   <tr><td>1 studio</td><td class="num">≈ $0.11</td><td>Less than one minute of the owner's time.</td></tr>
   <tr><td>100 studios</td><td class="num">≈ $11</td><td>Plus hosting if offered online (a small web service is about $7/month, Lecture 8).</td></tr>
   <tr><td>10,000 studios</td><td class="num">≈ $1,100</td><td>AI is still not the main cost. Hosting, support and bank-data security would be.</td></tr>
-  <tr><td>Worst case, 1 studio</td><td class="num">≤ $6</td><td>The daily budget of 400k tokens is a hard cap: before each call Encore reserves an upper bound (the input's size in bytes, since every token is at least one byte, plus the 12k output limit), and calls run one at a time, so the day can't pass 400k. Even if all of it were output, that's $0.20/day.</td></tr>
+  <tr><td>Worst case, 1 studio</td><td class="num">≈ $6</td><td>A conservative daily budget guard of 400k tokens: before each call Encore reserves an upper bound (the input's size in bytes plus the 12k output limit) and runs calls one at a time. Even if all 400k were output, that's about $0.20/day. It's an approximate ceiling rather than an absolute guarantee, since a failed or retried call can use tokens that aren't logged.</td></tr>
 </table>
 
 <h3>What I did to keep cost down</h3>
@@ -292,7 +293,7 @@ footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid va
   <tr><td><b>Wrong action</b></td><td>Texting someone who already paid, or threatening a loyal student</td><td>Nothing is sent automatically: the owner reviews every message. Threat words are blocked. Tone can only escalate after earlier reminders. Promise dates must be within 60 days.</td></tr>
   <tr><td><b>Fake Zelle emails / double counting</b></td><td>A scam email ("payment pending, upgrade your account") or the same payment seen in an email and in the bank file inflates what was paid</td><td>Scam markers and non-Chase senders are blocked by code. The Email Reader's name and amount must appear word for word in the email. An email payment and a bank line with the same payer, amount and date (±3 days) count once; the bank line just confirms it.</td></tr>
   <tr><td><b>Malfunction / loops</b></td><td>An agent calls tools forever or returns broken output</td><td>Max 6 tool steps per agent. Strict JSON schemas. Invented or missing IDs are handled by code fallbacks. Bad tool calls return an error instead of crashing the run.</td></tr>
-  <tr><td><b>Overspending</b></td><td>A bug or a bad actor burns the token budget</td><td>A hard 400k tokens/day cap (each call reserves an upper bound first, and calls run one at a time), 20 calls/min, 12k output tokens per call, at most 25 drafts per request. The AI buttons stop at the limit; the ledger keeps working.</td></tr>
+  <tr><td><b>Overspending</b></td><td>A bug or a bad actor burns the token budget</td><td>A conservative 400k tokens/day budget guard (each call reserves an upper bound first, and calls run one at a time), 20 calls/min, 12k output tokens per call, at most 25 drafts per request. The AI buttons stop at the limit; the ledger keeps working.</td></tr>
 </table>
 
 <h3>Defenses working</h3>
@@ -325,7 +326,7 @@ footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid va
   <tr><td>Missed by Encore / flagged wrongly</td><td class="num">—</td><td class="num">0 / 0</td></tr>
 </table>
 <p class="small">Timed by me, the owner. The manual round came first, so Encore had a small learning advantage. With 0 people owing that week, the test measured speed and accuracy; the drafts were checked separately and now follow my own writing style ("Hello …, I hope you are well. … Kindly, DNA Dance Academy").</p>
-<div class="callout dark">"I think it is a great tool for keeping track and reviewing, because it makes it systematic. It's a process versus no process, and process always wins. It tracks Zelle and cash payments: Venmo and credit cards take a processing fee, and these don't, but they require more time to monitor. And if I assign this to a staff member, they can do it without knowing who is who, just with access to the running schedule, the Chase CSV and the emails. So I can delegate it instead of doing it myself."<br><span style="color:#ff8cc4">Denys Drozdyuk, owner, DNA Dance Academy</span></div>
+<div class="callout dark">"I think it is a great tool for keeping track and reviewing, because it makes it systematic. It's a process versus no process, and process always wins. It tracks Zelle and cash payments: Venmo and credit cards take a processing fee, and these don't, but they require more time to monitor. And if I assign this to a staff member, they can do it without knowing who is who, just with access to the running schedule, the Chase CSV and the emails. So I can delegate it instead of doing it myself."<br><span style="color:#ff8cc4">Denys Drozdyuk, founder and owner, DNA Dance Academy</span></div>
 
 <h3>What that means</h3>
 <p>The biggest impact is not the minutes or the dollars. It's turning payment follow-up from something that depends on my memory at 11 pm into a <b>repeatable process</b>, one I can hand to a staff member. It also makes fee-free payments (Zelle and cash) as easy to manage as card payments, without paying a processor's fee on every lesson. In money terms, if Encore catches half of the 5+ payments that slip each month, that's roughly $175–$400 a month at list prices (an estimate: 5 × 50% × $70–$160), for about $0.11 a month in AI. Because Encore is configured by a few settings (studio name, Zelle email, prices), any small teacher or studio paid by Zelle can use it the same way.</p>
