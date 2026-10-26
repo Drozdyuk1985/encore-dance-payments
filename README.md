@@ -27,7 +27,7 @@ python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-python run.py                      # opens http://localhost:8000
+python run.py                      # opens http://localhost:8000 (or the next free port)
 ```
 
 ### API key
@@ -40,6 +40,12 @@ PORTKEY_API_KEY=...
 ```
 
 See `.env.example`. If no key is found the app still opens and the ledger works; the AI buttons show a clear error.
+
+### If something goes wrong
+
+- **Port 8000 is busy** (another app is running): Encore automatically uses the next free port and prints the address, e.g. `http://localhost:8001`.
+- **`python3` is older than 3.11**: install a current Python from python.org, then repeat the steps.
+- **"PORTKEY_API_KEY is missing"**: put the `.env` in this folder or the folder above it. The ledger works without a key; only the AI buttons need it.
 
 ### What to try
 
