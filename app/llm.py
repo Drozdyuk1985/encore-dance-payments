@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import threading
 from collections import deque
 from datetime import date, datetime
 from typing import Callable
@@ -14,6 +15,9 @@ from openai import BadRequestError, OpenAI
 from . import config
 
 _recent_calls: deque[float] = deque()
+# One model call at a time: the budget check, the call and its usage log happen together, so two
+# simultaneous requests can't both squeeze into the last of the daily budget.
+_budget_lock = threading.Lock()
 
 
 class BudgetExceeded(RuntimeError):
@@ -61,8 +65,9 @@ def tokens_used_today() -> int:
 
 
 def estimate_call_tokens(*texts: str) -> int:
-    """Worst case for one call: input estimated generously (1 token per 3 characters) plus the full output limit."""
-    return sum(len(t) for t in texts) // 3 + config.MAX_OUTPUT_TOKENS
+    """Upper bound for one call: every input token is at least one UTF-8 byte, so bytes (+ message overhead)
+    can't be exceeded; output can't exceed max_output_tokens."""
+    return sum(len(t.encode("utf-8")) for t in texts) + 200 + config.MAX_OUTPUT_TOKENS
 
 
 def _check_budget(reserve: int) -> None:
@@ -119,30 +124,31 @@ def run_agent(
     trace, usage_recs = [], []
     fixed = instructions + json.dumps(schema) + json.dumps(tools or [])
     for step in range(config.MAX_TOOL_STEPS):
-        _check_budget(estimate_call_tokens(fixed, user_input, *(str(i) for i in items[1:])))
-        client = client or _client()
-        t0 = time.time()
-        kwargs = dict(
-            model=config.MODEL_NAME,
-            instructions=instructions,
-            input=items,
-            max_output_tokens=config.MAX_OUTPUT_TOKENS,
-            text={"format": {"type": "json_schema", "name": f"{agent}_output", "schema": schema, "strict": True}},
-            prompt_cache_key=f"encore-{agent}",
-        )
-        if tools:
-            kwargs["tools"] = tools
-        if os.getenv("PORTKEY_FORCE_REFRESH"):  # measurement mode: skip the gateway's response cache
-            kwargs["extra_headers"] = {"x-portkey-cache-force-refresh": "true"}
-        try:
-            raw = client.responses.with_raw_response.create(**kwargs)
-        except BadRequestError as e:
-            if "content_filter" in str(e) or "content management policy" in str(e):
-                raise ContentFiltered("The model provider's safety filter rejected this text.") from e
-            raise
-        resp = raw.parse()
-        gateway_cache = raw.headers.get("x-portkey-cache-status", "unknown")
-        usage_recs.append(_log(agent, run_id, resp.usage, int((time.time() - t0) * 1000), gateway_cache))
+        with _budget_lock:
+            _check_budget(estimate_call_tokens(fixed, user_input, *(str(i) for i in items[1:])))
+            client = client or _client()
+            t0 = time.time()
+            kwargs = dict(
+                model=config.MODEL_NAME,
+                instructions=instructions,
+                input=items,
+                max_output_tokens=config.MAX_OUTPUT_TOKENS,
+                text={"format": {"type": "json_schema", "name": f"{agent}_output", "schema": schema, "strict": True}},
+                prompt_cache_key=f"encore-{agent}",
+            )
+            if tools:
+                kwargs["tools"] = tools
+            if os.getenv("PORTKEY_FORCE_REFRESH"):  # measurement mode: skip the gateway's response cache
+                kwargs["extra_headers"] = {"x-portkey-cache-force-refresh": "true"}
+            try:
+                raw = client.responses.with_raw_response.create(**kwargs)
+            except BadRequestError as e:
+                if "content_filter" in str(e) or "content management policy" in str(e):
+                    raise ContentFiltered("The model provider's safety filter rejected this text.") from e
+                raise
+            resp = raw.parse()
+            gateway_cache = raw.headers.get("x-portkey-cache-status", "unknown")
+            usage_recs.append(_log(agent, run_id, resp.usage, int((time.time() - t0) * 1000), gateway_cache))
 
         calls = [o for o in resp.output if getattr(o, "type", "") == "function_call"]
         if not calls:

@@ -82,7 +82,7 @@ PRICE_GROUP=70
 - **Privacy:** the model sees `C007`-style IDs, not names, phones, emails or non-Zelle bank rows (exception: the Email Reader reads the payer name in an unusual-format Zelle email). Names are put back in on your computer.
 - **Prompt injection:** a code pre-screen blocks obvious attacks at zero tokens; replies are wrapped as untrusted data; the course provider's filter is a third layer; and the Reply agent has no tool that changes balances.
 - **Invented facts:** amounts come only from code. Drafts may only use `{amount}`; reply drafts with dollar figures no tool returned are scrubbed.
-- **Runaway cost:** strict daily token cap (400k; each call must fit at its maximum size before it runs), 20 calls per minute, 6 tool steps per agent, 12k output tokens per call. All are in `app/config.py`.
+- **Runaway cost:** hard daily token cap (400k; each call reserves an upper bound first and calls run one at a time), 20 calls per minute, 6 tool steps per agent, 12k output tokens per call. All are in `app/config.py`.
 
 ## Tests and scripts
 
