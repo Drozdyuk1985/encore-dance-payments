@@ -200,7 +200,7 @@ footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid va
   <li><b>Batching.</b> One Collector call writes all drafts. A retry is sent only for the drafts that failed checks, never the whole batch.</li>
   <li><b>Prompt caching.</b> Long, fixed instructions come first, with a stable <code>prompt_cache_key</code> per agent. I added worked examples to push the fixed part over OpenAI's 1,024-token caching minimum. Cached input costs 10× less.</li>
   <li><b>Zero-token defenses.</b> The injection pre-screen blocks obvious attacks before any call.</li>
-  <li><b>Hard limits:</b> 400k tokens/day, 20 calls/minute, 6 tool steps per agent, 12k output tokens per response.</li>
+  <li><b>Budget controls:</b> 400k tokens/day, 20 calls/minute, 6 tool steps per agent, 12k output tokens per response.</li>
 </ol>
 
 <h3>Did cost cutting hurt performance?</h3>
