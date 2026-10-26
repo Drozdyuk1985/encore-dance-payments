@@ -10,7 +10,7 @@ It reads Zelle notification emails and the studio's Chase bank export, keeps onl
 | **Email Reader** | Reads only Zelle emails whose format code doesn't recognise | Its payer name and amount count only if they appear word for word in the email; scam emails are blocked by code first |
 | **Reply handler** | Reads a student's answer ("I already paid", "can I pay Friday?") | `get_balance`, `recent_payments`, `find_payments_by_amount`, `record_promise`, `flag_for_owner`. No tool can mark anyone as paid |
 
-Built by Denys Drozdyuk, founder and owner of DNA Dance Academy (a real ballroom school in New York), for that studio (private lessons $160, group drop-in $70, Zelle to `info@dnadanceacademy.com`).
+Built by Denys Drozdyuk, co-founder of DNA Dance Academy (a real ballroom school in New York, [www.dnadanceacademy.com](https://www.dnadanceacademy.com); [bio](https://www.dnadanceacademy.com/our-team/denys-drozdyuk)), for that studio (private lessons $160, group drop-in $70, Zelle to `info@dnadanceacademy.com`).
 Model: `gpt-6-luna` through the course Portkey key.
 
 ---
