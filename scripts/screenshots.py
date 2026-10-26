@@ -25,8 +25,10 @@ def post(path: str, body: dict) -> dict:
 
 def shot(page, name: str, el: str | None = None, full: bool = False):
     path = OUT / f"{name}.png"
-    if el:
+    if el:  # the sticky header would otherwise be captured on top of a scrolled-to element
+        page.evaluate("document.querySelector('header').style.position = 'static'")
         page.locator(el).screenshot(path=path)
+        page.evaluate("document.querySelector('header').style.position = ''")
     else:
         page.screenshot(path=path, full_page=full)
     print("saved", path.name)

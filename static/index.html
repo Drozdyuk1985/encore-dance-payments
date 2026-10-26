@@ -415,6 +415,9 @@ function renderDrafts() {
       <button class="btn ghost sm" data-copy="${i}">Copy</button>
       <button class="btn ghost sm" data-mark="${i}">Mark sent</button>
     </div></div>`).join("");
+  const fit = t => { t.style.height = "auto"; t.style.height = (t.scrollHeight + 4) + "px"; };
+  $$("[data-d]").forEach(fit);
+  $$("[data-d]").forEach(t => t.addEventListener("input", () => fit(t)));
   $$("[data-d]").forEach(t => t.oninput = () => {
     const d = drafts[t.dataset.d]; d.text = t.value;
     const card = t.closest(".draft"); card.querySelector('[data-ch="sms"]').href = smsLink(d.phone, d.text);

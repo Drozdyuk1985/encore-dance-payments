@@ -24,7 +24,7 @@ def free_port(preferred: int) -> int:
 if __name__ == "__main__":
     port = free_port(int(os.getenv("PORT", "8000")))
     url = f"http://localhost:{port}"
-    print(f"\n  Encore is running at {url}  (Ctrl+C to stop)\n")
+    print(f"\n  Encore is running at {url}  (Ctrl+C to stop)\n", flush=True)
     if not os.getenv("NO_BROWSER"):
         Timer(1.5, lambda: webbrowser.open(url)).start()
     uvicorn.run("app.server:app", host="127.0.0.1", port=port)
