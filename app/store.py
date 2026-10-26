@@ -145,7 +145,7 @@ def import_email_payments(state: dict, results: list[dict], label: str = "Zelle 
             rows.append({**r, "kind": "duplicate", "why": "already counted (same payer, amount and date ±3 days)"})
             continue
         p = {"id": new_id("E"), "date": r["date"], "payer": r["payer"], "payer_key": r["payer_key"],
-             "amount": r["amount"], "source": "email", "bank_confirmed": False}
+             "amount": r["amount"], "source": "email", "bank_confirmed": False, "memo": r.get("memo", "")}
         cid, is_new = _client_id_for_new_payer(state, p)
         new_clients += is_new
         p["client_id"] = cid

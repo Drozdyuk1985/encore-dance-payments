@@ -56,7 +56,7 @@ The app opens on the **Sample studio**: fictional students and a made-up Chase e
 
 ### Using real data instead of the sample
 
-Switch the header toggle to **My studio**, open **Import Zelle**, and drag in Zelle emails from Mail (.eml) and/or upload a Chase CSV
+Switch the header toggle to **My studio**, open **Import Zelle**, and add Zelle emails (Gmail: open the email → ⋮ → Download message, or paste the text; Apple Mail: drag them in) and/or upload a Chase CSV
 (Chase → account → *Download account activity* → CSV). **Copy who owes for Notes** (Tonight tab) gives lines like `Alex $160` for an Apple Notes to-do list. Only incoming Zelle rows are kept. Your data is stored in
 `data/workspaces/real/`, which is git-ignored and never leaves your computer except as client IDs and payment
 statistics sent to the model (no names, no bank details).

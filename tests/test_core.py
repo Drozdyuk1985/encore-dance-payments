@@ -106,3 +106,22 @@ def test_email_reader_answer_must_appear_in_email(monkeypatch):
     out = agents.read_zelle_emails(s, "t", split_pasted(ODD))
     assert out["summary"]["new_payments"] == 0 and s["payments"] == []
     assert out["code_checks"] and "rejected" in out["code_checks"][0]
+
+
+CHASE_LAYOUT = """You received money with Zelle\nChase <no.reply.alerts@chase.com> Fri, Oct 23, 2026 at 10:37 PM
+Zelle payment
+JANE DOE sent you
+money
+Here are the details:
+Amount $160.00
+Sent on Oct 23, 2026
+Transaction number 10000000001
+Memo Janie Oct 23
+"""
+
+
+def test_reads_chase_alert_layout_without_ai():
+    r = classify(split_pasted(CHASE_LAYOUT)[0], "2026-10-25")
+    assert (r["kind"], r["payer"], r["amount"], r["date"], r["memo"]) == ("payment", "Jane Doe", 160.0, "2026-10-23", "Janie Oct 23")
+    flat = classify(split_pasted(" ".join(CHASE_LAYOUT.split()))[0], "2026-10-25")
+    assert (flat["kind"], flat["payer"], flat["amount"]) == ("payment", "Jane Doe", 160.0)

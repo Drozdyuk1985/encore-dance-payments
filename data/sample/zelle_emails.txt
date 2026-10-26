@@ -1,28 +1,49 @@
 From: Chase <no.reply.alerts@chase.com>
 Subject: You received money with Zelle®
 Date: Sat, 24 Oct 2026 19:12:40 -0400
+To: info@dnadanceacademy.com
 
-PRIYA SHAH sent you $160.00
-Memo: private lesson oct 14
-The money is now in your account ending in (...0000).
-Thank you for using Zelle® with Chase.
+Zelle® payment
+PRIYA SHAH sent you
+money
+Here are the details:
+Amount $160.00
+Sent on Oct 24, 2026
+Transaction number 10000000001
+Memo Priya private Oct 14
+PRIYA SHAH is registered with a Zelle® member bank that supports payments in real time, so your money will usually be available in a few moments.
 
 -----
 From: Chase <no.reply.alerts@chase.com>
 Subject: You received money with Zelle®
 Date: Sat, 24 Oct 2026 20:03:05 -0400
+To: info@dnadanceacademy.com
 
-TOM BECKER sent you $70.00
-Memo: group class
-The money is now in your account ending in (...0000).
+Zelle® payment
+TOM BECKER sent you
+money
+Here are the details:
+Amount $70.00
+Sent on Oct 24, 2026
+Transaction number 10000000002
+Memo group class
+TOM BECKER is registered with a Zelle® member bank that supports payments in real time, so your money will usually be available in a few moments.
 
 -----
 From: Chase <no.reply.alerts@chase.com>
 Subject: You received money with Zelle®
 Date: Tue, 20 Oct 2026 21:15:00 -0400
+To: info@dnadanceacademy.com
 
-MAYA ORLOVA sent you $160.00
-Memo: tuesday private
+Zelle® payment
+MAYA ORLOVA sent you
+money
+Here are the details:
+Amount $160.00
+Sent on Oct 20, 2026
+Transaction number 10000000003
+Memo Maya Tuesday
+MAYA ORLOVA is registered with a Zelle® member bank that supports payments in real time, so your money will usually be available in a few moments.
 
 -----
 From: Zelle Payments Team <alerts@zelle-secure-pay.net>

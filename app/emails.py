@@ -22,8 +22,9 @@ PATTERNS = [
     re.compile(rf"You received\s+{AMOUNT}\s+from\s+(?P<name>{NAME})(?:[.,\n]|\s+(?:on|via|with|through)\b)", re.I),
     re.compile(rf"{AMOUNT}\s+(?:was\s+)?(?:sent to you|received)\s+from\s+(?P<name>{NAME})(?:[.,\n]|\s+(?:on|via|with)\b)", re.I),
 ]
-SENT_MONEY = re.compile(rf"(?P<name>{NAME})\s+sent you money", re.I)
+SENT_MONEY = re.compile(rf"(?P<name>{NAME})\s+sent you\s+money", re.I)  # Chase: "NAME sent you money" + "Amount $X"
 AMOUNT_LINE = re.compile(rf"Amount\s*:?\s*{AMOUNT}", re.I)
+MEMO = re.compile(r"^\s*Memo\s*:?[ \t]*(?P<memo>[^\n]{1,80})", re.I | re.M)
 
 # Phrases that real "you received money" alerts never contain but Zelle scams do.
 SCAM = re.compile(
@@ -111,17 +112,24 @@ def classify(mail: dict, today: str | None = None) -> dict:
         return {**base, "kind": "suspicious", "why": why}
     if re.search(r"\byou sent\b|\byou(?:'ve| have)? requested\b|\brequested (?:money|\$\s?\d)", text, re.I):
         return {**base, "kind": "not_a_payment", "why": "outgoing payment or a request, not money received"}
+    memo = MEMO.search(text)
+    extra = {"memo": memo.group("memo").strip()} if memo else {}
+    m, a = SENT_MONEY.search(text), AMOUNT_LINE.search(text)
+    if m and a:  # Chase's real layout, checked first
+        return {**base, **_payment(m.group("name"), a.group("amount")), **extra}
     for pat in PATTERNS:
         m = pat.search(text)
         if m:
-            return {**base, **_payment(m.group("name"), m.group("amount"))}
-    m, a = SENT_MONEY.search(text), AMOUNT_LINE.search(text)
-    if m and a:
-        return {**base, **_payment(m.group("name"), a.group("amount"))}
+            return {**base, **_payment(m.group("name"), m.group("amount")), **extra}
     return {**base, "kind": "unknown_format", "why": "mentions Zelle but no 'X sent you $Y' line was found"}
 
 
 def _payment(name: str, amount: str) -> dict:
-    name = re.sub(r"^(?:Hi|Hello|Good news|Great news)[,!:]?\s+", "", name.strip(), flags=re.I).strip(" .,:")
+    name = re.sub(r"^(?:Hi|Hello|Good news|Great news)[,!:]?\s+", "", name.strip(), flags=re.I)
+    name = re.sub(r"^(?:Zelle\s*)?payment\s+", "", name, flags=re.I).strip(" .,:")  # "Zelle® payment NAME sent you money"
+    # Chase writes payers in capitals; on a flattened line keep just the trailing ALL-CAPS name ("PM Zelle payment JANE DOE").
+    caps = re.search(r"(?:\b[A-Z][A-Z.'&\-]+\s+)+[A-Z][A-Z.'&\-]+$", name)
+    if caps and re.search(r"[a-z]", name):
+        name = caps.group(0)
     return {"kind": "payment", "payer": display_name(name), "payer_key": normalize_name(name),
             "amount": round(float(amount.replace(",", "")), 2)}

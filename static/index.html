@@ -208,7 +208,7 @@ td input,td select{padding:6px 8px;width:100%}
   <p class="lead">Two ways in. <b>Zelle emails</b> are fastest: a payment counts the same evening. The <b>Chase CSV</b> is the full record. Use both. A payment seen in an email and later in the bank file is counted once.</p>
   <div class="card">
     <h3>1 · Zelle emails</h3>
-    <p class="muted small" style="margin-top:0">In Mail, select your "You received money with Zelle" emails and drag them onto the file picker (they become .eml files), or copy and paste the email text below. Standard alerts are read by code; only unusual formats go to the Email Reader agent, and its answer counts only if the name and amount appear word for word in the email. Fake Zelle emails ("pending", "upgrade your account", odd sender) are flagged and never counted.</p>
+    <p class="muted small" style="margin-top:0"><b>Gmail:</b> open a "You received money with Zelle®" email → ⋮ → <b>Download message</b> (.eml), then choose the files here. Or select the email text and paste it below (several emails are fine; put a line of dashes between them). <b>Apple Mail:</b> drag the emails onto the file picker. Standard alerts are read by code; only unusual formats go to the Email Reader agent, and its answer counts only if the name and amount appear word for word in the email. Fake Zelle emails ("pending", "upgrade your account", odd sender) are flagged and never counted.</p>
     <div class="row"><input type="file" id="emlFiles" accept=".eml,.txt,message/rfc822,text/plain" multiple>
       <button class="btn ghost sm hide" id="sampleEmails">Load sample emails</button></div>
     <textarea id="emlText" placeholder="…or paste one or more Zelle emails here" style="margin-top:10px"></textarea>
@@ -483,7 +483,7 @@ $("#emailBtn").onclick = async () => {
     $("#emailResult").innerHTML = `<div class="okbox" style="margin-bottom:10px">Read <b>${s.emails_read}</b> emails · <b>${s.new_payments}</b> new payments counted · ${s.duplicates_skipped} already counted · <b>${s.suspicious_blocked}</b> suspicious blocked${r.read_by_ai ? ` · ${r.read_by_ai} unusual email(s) read by the Email Reader agent` : ""}</div>
       <div class="tablewrap"><table><thead><tr><th>Result</th><th>Payer</th><th>Amount</th><th>Date</th><th>Why</th></tr></thead><tbody>${r.rows.map(x => {
         const [cls, label] = EMAIL_KIND[x.kind] || ["one_time", x.kind];
-        return `<tr><td><span class="chip s-${cls}">${label}</span></td><td>${esc(x.client || x.payer || "")}</td><td>${x.amount ? money(x.amount) : ""}</td><td>${fmtDate(x.date)}</td><td class="small muted">${esc(x.why || "")}</td></tr>`;
+        return `<tr><td><span class="chip s-${cls}">${label}</span></td><td>${esc(x.client || x.payer || "")}</td><td>${x.amount ? money(x.amount) : ""}</td><td>${fmtDate(x.date)}</td><td class="small muted">${esc([x.memo ? "memo: " + x.memo : "", x.why || ""].filter(Boolean).join(" · "))}</td></tr>`;
       }).join("")}</tbody></table></div>${r.usage ? `<div class="usage" style="margin-top:8px">${usageLine(r.usage)}</div>` : ""}`;
     $("#emlText").value = ""; $("#emlFiles").value = "";
   } catch (e) { $("#emailResult").innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
