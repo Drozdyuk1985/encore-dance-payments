@@ -125,3 +125,35 @@ def test_reads_chase_alert_layout_without_ai():
     assert (r["kind"], r["payer"], r["amount"], r["date"], r["memo"]) == ("payment", "Jane Doe", 160.0, "2026-10-23", "Janie Oct 23")
     flat = classify(split_pasted(" ".join(CHASE_LAYOUT.split()))[0], "2026-10-25")
     assert (flat["kind"], flat["payer"], flat["amount"]) == ("payment", "Jane Doe", 160.0)
+
+
+# ---- Pasted Apple Notes
+from datetime import date as _date  # noqa: E402
+
+from app.notes import parse_owes, parse_schedule  # noqa: E402
+
+CLIENTS = {"C1": {"name": "Priya Shah", "payer_names": ["Priya Shah"]},
+           "C2": {"name": "Tom Becker", "payer_names": ["Tom Becker"]},
+           "C3": {"name": "Tom Reyes", "payer_names": []}}
+
+
+def test_schedule_paste():
+    text = "Running schedule\nMonday 10/19\n4pm Priya private\nTue\n4pm Priya (cancelled)\n6pm group: Tom Becker, Jordan\nThu 10/29\n5pm Priya"
+    rows = parse_schedule(text, CLIENTS, _date(2026, 10, 19), _date(2026, 10, 25))
+    got = [(r["date"], r["time"], r["kind"], r["status"], r["client_ids"], r["new_name"]) for r in rows]
+    assert got == [("2026-10-19", "16:00", "private", "ready", ["C1"], ""),
+                   ("2026-10-20", "16:00", "private", "canceled", ["C1"], ""),
+                   ("2026-10-20", "18:00", "group", "ready", ["C2"], ""),
+                   ("2026-10-20", "18:00", "group", "ready", [], "Jordan"),
+                   ("2026-10-29", "17:00", "private", "upcoming", ["C1"], "")]
+    tom = parse_schedule("Mon 10/19\n5pm Tom", CLIENTS, _date(2026, 10, 19), _date(2026, 10, 25))
+    assert tom[0]["client_ids"] == ["C2", "C3"]  # two Toms: the owner must choose
+
+
+def test_owes_paste_and_future_lessons_not_charged():
+    rows = parse_owes("TO DO\nPriya $160\nJordan - $70\nbuy shoes", CLIENTS)
+    assert [(r["amount"], r["client_ids"], r["new_name"]) for r in rows] == [(160.0, ["C1"], ""), (70.0, [], "Jordan")]
+    client = {"id": "C1", "rates": {}}
+    lessons = [{"client_id": "C1", "date": "2026-10-20", "kind": "private", "price": 160.0},
+               {"client_id": "C1", "date": "2026-10-29", "kind": "private", "price": 160.0}]  # future
+    assert balance(client, lessons, [], "2026-10-01", "2026-10-25")["owed"] == 160.0

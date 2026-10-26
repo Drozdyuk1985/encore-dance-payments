@@ -14,7 +14,8 @@ def lesson_price(client: dict, kind: str) -> float:
 
 def balance(client: dict, lessons: list[dict], payments: list[dict], start: str, as_of: str) -> dict:
     """Pay off lessons oldest-first with payments made on or after the ledger start date."""
-    mine = sorted((l for l in lessons if l["client_id"] == client["id"] and l["date"] >= start), key=lambda l: l["date"])
+    # Lessons dated after today are scheduled, not owed yet; they start counting on their date.
+    mine = sorted((l for l in lessons if l["client_id"] == client["id"] and start <= l["date"] <= as_of), key=lambda l: l["date"])
     paid = sorted((p for p in payments if p["date"] >= start), key=lambda p: p["date"])
     charged = round(sum(l["price"] for l in mine), 2)
     total_paid = round(sum(p["amount"] for p in paid), 2)

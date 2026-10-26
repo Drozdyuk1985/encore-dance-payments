@@ -41,10 +41,14 @@ def run_radar(state: dict, run_id: str, prefilter: bool = True) -> dict:
         if not c.get("active", True):
             skipped["marked_inactive_by_owner"] += 1
             continue
-        if not s.get("n_payments"):
-            continue
         led = ledger_for(state, cid)
         owes = bool(led and led["owed"] > 0)
+        if not s.get("n_payments"):
+            if owes:  # e.g. a balance carried over from Notes for someone with no Zelle history yet
+                code_results[cid] = {"client_id": cid, "status": "owes_balance", "priority": 5, "suggest_reminder": True,
+                                     "reason": f"${led['owed']:,.0f} owed; no Zelle payments on record yet.",
+                                     "decided_by": "code"}
+            continue
         if s["days_since_last"] > INACTIVE_AFTER_DAYS and not owes:
             skipped["inactive"] += 1
             continue
@@ -122,6 +126,8 @@ def _lesson_list(unpaid: list[dict]) -> str:
         days = [day(l["date"]) for l in unpaid if l["kind"] == kind]
         if days:
             parts.append(f"{one if len(days) == 1 else many} on {join(days)}")
+    if any(l["kind"] == "balance" for l in unpaid):
+        parts.append("earlier balance")
     return "your " + " and ".join(parts) if parts else "your recent lessons"
 
 

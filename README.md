@@ -57,7 +57,7 @@ The app opens on the **Sample studio**: fictional students and a made-up Chase e
 ### Using real data instead of the sample
 
 Switch the header toggle to **My studio**, open **Import Zelle**, and add Zelle emails (Gmail: open the email → ⋮ → Download message, or paste the text; Apple Mail: drag them in) and/or upload a Chase CSV
-(Chase → account → *Download account activity* → CSV). **Copy who owes for Notes** (Tonight tab) gives lines like `Alex $160` for an Apple Notes to-do list. Only incoming Zelle rows are kept. Your data is stored in
+(Chase → account → *Download account activity* → CSV). **Copy who owes for Notes** (Tonight tab) gives lines like `Alex $160` for an Apple Notes to-do list. On **Log lessons → Paste from Apple Notes** you can paste a week (or more) of your schedule, e.g. `Tuesday 10/27` / `4pm Priya private` / `6pm group: Nina, Tom`, or your "who owes me" lines (`Alex $160`). Code reads them (no AI), shows a preview, and saves only what you confirm. Only incoming Zelle rows are kept. Your data is stored in
 `data/workspaces/real/`, which is git-ignored and never leaves your computer except as client IDs and payment
 statistics sent to the model (no names, no bank details).
 
@@ -98,6 +98,7 @@ python scripts/screenshots.py       # demo walkthrough screenshots (needs `pip i
 app/config.py    settings, .env lookup (repo, then parent), prices, budgets
 app/bank.py      Chase CSV → incoming Zelle payments only
 app/emails.py    Zelle notification emails → payments; scam detection
+app/notes.py     pasted Apple Notes schedule / "who owes" list → lessons and balances
 app/radar.py     payment-rhythm statistics (pure code)
 app/ledger.py    exact balances from logged lessons (pure code)
 app/agents.py    Radar, Collector, Reply handler + the checks around them

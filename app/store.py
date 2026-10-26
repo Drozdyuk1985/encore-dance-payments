@@ -212,3 +212,46 @@ def _seed_sample() -> dict:
         c["name"] = display_name(c["name"])
     state["imports"][0]["imported_on"] = state["settings"]["as_of"]
     return state
+
+
+def apply_notes(state: dict, kind: str, rows: list[dict]) -> dict:
+    """Save confirmed preview rows: lessons from a pasted schedule, or carried-over balances from a 'who owes' list."""
+    from .ledger import lesson_price
+
+    today = as_of(state)
+    added, skipped, new_clients = 0, 0, 0
+    for r in rows:
+        cid = r.get("client_id") or ""
+        if not cid and r.get("new_name"):
+            name = " ".join(r["new_name"].split())[:60]
+            cid = next((k for k, c in state["clients"].items() if c["name"].lower() == name.lower()), "")
+            if not cid:
+                cid = _next_client_id(state)
+                state["clients"][cid] = {"id": cid, "name": name, "payer_keys": [], "payer_names": [], "phone": "",
+                                         "email": "", "language": "English", "notes": "added from Notes", "rates": {},
+                                         "active": True}
+                new_clients += 1
+        if cid not in state["clients"]:
+            skipped += 1
+            continue
+        if kind == "owes":
+            item = {"client_id": cid, "date": today, "kind": "balance", "price": round(float(r["amount"]), 2),
+                    "time": "", "note": "carried over from Notes"}
+        else:
+            if r.get("kind") not in ("private", "group") or not r.get("date"):
+                skipped += 1
+                continue
+            item = {"client_id": cid, "date": r["date"], "kind": r["kind"], "time": r.get("time", ""),
+                    "price": lesson_price(state["clients"][cid], r["kind"]), "note": "from Running schedule"}
+        dup = any(l["client_id"] == cid and l["date"] == item["date"] and l["kind"] == item["kind"]
+                  and l.get("time", "") == item["time"] and (kind != "owes" or l["price"] == item["price"])
+                  for l in state["lessons"])
+        if dup:
+            skipped += 1
+            continue
+        state["lessons"].append({"id": new_id("L"), **item})
+        added += 1
+        start = state["settings"].get("ledger_start")
+        if not start or item["date"] < start:
+            state["settings"]["ledger_start"] = item["date"]
+    return {"added": added, "skipped_duplicates_or_invalid": skipped, "new_clients": new_clients}

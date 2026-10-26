@@ -169,9 +169,19 @@ td input,td select{padding:6px 8px;width:100%}
 
 <!-- LESSONS -->
 <section id="tab-lessons" class="hide">
-  <h2>Log a lesson</h2>
-  <p class="lead">Takes five seconds after class. Encore uses these to know exactly who owes what. Payments are matched automatically from your Zelle import, oldest lesson first.</p>
+  <h2>Log lessons</h2>
+  <p class="lead">Encore uses logged lessons to know exactly who owes what. Payments are matched automatically from your Zelle emails and bank import, oldest lesson first. Paste straight from Apple Notes, or log one lesson by hand.</p>
+  <div class="card" style="margin-bottom:14px">
+    <div class="row space"><h3 style="margin:0">Paste from Apple Notes</h3>
+      <div class="kind" id="nKind"><button data-k="schedule" class="on">Running schedule</button><button data-k="owes">Who still owes me</button></div></div>
+    <p class="muted small" id="nHelp"></p>
+    <div class="row small" id="nWeekRow"><label>Days without a date (like "Tuesday") belong to the week starting</label><input type="date" id="nWeek"></div>
+    <textarea id="nText" style="margin-top:10px"></textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" id="nPreview">Preview</button><span class="muted small">Read by code on your computer. No AI, nothing saved until you confirm.</span></div>
+    <div id="nOut" style="margin-top:12px"></div>
+  </div>
   <div class="card">
+    <h3>Log one lesson</h3>
     <div class="row" style="gap:14px">
       <div style="flex:2;min-width:220px"><label>Student</label><br><select id="lClient" style="width:100%"></select></div>
       <div><label>Date</label><br><input type="date" id="lDate"></div>
@@ -413,7 +423,7 @@ function renderLessons() {
   if (!$("#lDate").value) $("#lDate").value = S.as_of;
   $("#ledgerStart").value = S.settings.ledger_start || "";
   $("#priceHint").textContent = `Private ${money(S.prices.private)} · Group ${money(S.prices.group)}. Custom private rates are set per client on the Clients tab.`;
-  $("#lessonRows").innerHTML = S.lessons.slice(0, 60).map(l => `<tr><td>${fmtDate(l.date)}</td><td>${esc(byId(l.client_id)?.name)}</td><td>${l.kind}</td><td>${money(l.price)}</td><td><button class="btn ghost sm" data-del="${l.id}">Remove</button></td></tr>`).join("") || `<tr><td colspan="5" class="muted">No lessons logged yet.</td></tr>`;
+  $("#lessonRows").innerHTML = S.lessons.slice(0, 80).map(l => `<tr><td>${fmtDate(l.date)}${l.time ? " · " + esc(l.time) : ""}${l.date > S.as_of ? ' <span class="chip s-package_or_prepaid">upcoming</span>' : ""}</td><td>${esc(byId(l.client_id)?.name)}</td><td>${l.kind === "balance" ? "balance from Notes" : l.kind}</td><td>${money(l.price)}</td><td><button class="btn ghost sm" data-del="${l.id}">Remove</button></td></tr>`).join("") || `<tr><td colspan="5" class="muted">No lessons logged yet.</td></tr>`;
   $$("[data-del]").forEach(b => b.onclick = async () => { S = await api("/api/lessons/delete", {ws: WS, id: b.dataset.del}); render(); });
 }
 $$("#lKind button").forEach(b => b.onclick = () => { lKind = b.dataset.k; $$("#lKind button").forEach(x => x.classList.toggle("on", x === b)); });
@@ -424,6 +434,68 @@ $("#logBtn").onclick = async () => {
     render(); toast(`Logged ${lKind} for ${byId(cid).name}`);
   } catch (e) { toast(e.message, true); }
 };
+// ---------- paste from Apple Notes
+let nKind = "schedule", nRows = [];
+const N_HELP = {
+  schedule: 'Copy your week (or longer) from the "Running schedule" note and paste it. Lines like <i>Tuesday 10/27</i> start a day; lines like <i>4pm Priya private</i> or <i>6pm group: Nina, Tom</i> become lessons. "cancel"/"cxl" lessons are skipped. Future lessons are saved but only charged once their date arrives.',
+  owes: 'Paste the "who still owes me" lines from your To Do note, like <i>Alex $160</i>. Each becomes a carried-over balance that shows on Tonight, can get a reminder, and is paid off by the next Zelle from that person.'};
+const N_PLACE = {schedule: "Monday 10/26\n4pm Priya private\n5:30pm Maya\nTuesday\n6pm group: Nina, Tom\n7pm Leo (cxl)", owes: "Priya $160\nTom $70"};
+function setNKind(k) {
+  nKind = k; nRows = []; $("#nOut").innerHTML = "";
+  $$("#nKind button").forEach(b => b.classList.toggle("on", b.dataset.k === k));
+  $("#nHelp").innerHTML = N_HELP[k]; $("#nText").placeholder = N_PLACE[k];
+  $("#nWeekRow").classList.toggle("hide", k !== "schedule");
+}
+$$("#nKind button").forEach(b => b.onclick = () => setNKind(b.dataset.k));
+setNKind("schedule");
+const N_STATUS = {ready: ["on_track", "will log"], upcoming: ["package_or_prepaid", "upcoming: charged on its date"],
+  canceled: ["likely_stopped", "canceled: skipped"], needs_date: ["maybe_forgot", "needs a date"]};
+function nClientSelect(r, i) {
+  const all = S.clients.filter(c => c.active).sort((a, b) => a.name.localeCompare(b.name));
+  const pre = r.options.length === 1 ? r.options[0].id : (r.options.length ? "" : (r.new_name ? "new:" + r.new_name : ""));
+  const opts = [r.options.length > 1 ? `<option value="">Which one?</option>` : "",
+    ...r.options.map(o => `<option value="${o.id}">${esc(o.name)}</option>`),
+    r.new_name ? `<option value="new:${esc(r.new_name)}">➕ New client: ${esc(r.new_name)}</option>` : "",
+    `<option disabled>──────────</option>`, ...all.filter(c => !r.client_ids.includes(c.id)).map(c => `<option value="${c.id}">${esc(c.name)}</option>`)];
+  return `<select data-nc="${i}">${opts.join("").replace(`value="${esc(pre)}"`, `value="${esc(pre)}" selected`)}</select>`;
+}
+$("#nPreview").onclick = async () => {
+  const text = $("#nText").value.trim(); if (!text) return toast("Paste something from your note first", true);
+  try {
+    const r = await api("/api/notes/preview", {ws: WS, kind: nKind, text, week_start: $("#nWeek").value || null});
+    nRows = r.rows;
+    if (!nRows.length) { $("#nOut").innerHTML = `<div class="alert small">No ${nKind === "owes" ? '"name $amount" lines' : "lessons"} found. Check the format hints above.</div>`; return; }
+    const head = nKind === "owes" ? "<th></th><th>From your note</th><th>Client</th><th>Amount</th>" : "<th></th><th>From your note</th><th>Date</th><th>Time</th><th>Client</th><th>Type</th><th>Status</th>";
+    $("#nOut").innerHTML = `<div class="tablewrap"><table><thead><tr>${head}</tr></thead><tbody>${nRows.map((x, i) => {
+      const on = nKind === "owes" || x.status === "ready" || x.status === "upcoming";
+      const [cls, label] = N_STATUS[x.status] || ["one_time", x.status];
+      return nKind === "owes"
+        ? `<tr><td><input type="checkbox" data-ni="${i}" ${on ? "checked" : ""} style="width:auto"></td><td class="small muted">${esc(x.line)}</td><td>${nClientSelect(x, i)}</td><td><input type="number" data-na="${i}" value="${x.amount}" style="width:100px"></td></tr>`
+        : `<tr><td><input type="checkbox" data-ni="${i}" ${on ? "checked" : ""} style="width:auto"></td><td class="small muted">${esc(x.line)}</td><td><input type="date" data-nd="${i}" value="${x.date}"></td><td>${esc(x.time)}</td><td>${nClientSelect(x, i)}</td>
+           <td><select data-nk="${i}"><option ${x.kind === "private" ? "selected" : ""}>private</option><option ${x.kind === "group" ? "selected" : ""}>group</option></select></td><td><span class="chip s-${cls}">${label}</span></td></tr>`;
+    }).join("")}</tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" id="nSave">Save checked rows</button><span class="muted small" id="nCount"></span></div>`;
+    $("#nSave").onclick = saveNotes;
+  } catch (e) { toast(e.message, true); }
+};
+async function saveNotes() {
+  const rows = [];
+  for (const [i, x] of nRows.entries()) {
+    if (!$(`[data-ni="${i}"]`).checked) continue;
+    const pick = $(`[data-nc="${i}"]`).value;
+    if (!pick) return toast(`Pick which client for: ${x.line}`, true);
+    const row = pick.startsWith("new:") ? {new_name: pick.slice(4)} : {client_id: pick};
+    if (nKind === "owes") row.amount = +$(`[data-na="${i}"]`).value;
+    else Object.assign(row, {date: $(`[data-nd="${i}"]`).value, time: x.time, kind: $(`[data-nk="${i}"]`).value});
+    rows.push(row);
+  }
+  if (!rows.length) return toast("Nothing checked", true);
+  try {
+    const r = await api("/api/notes/apply", {ws: WS, kind: nKind, rows});
+    S = r.state; render();
+    $("#nOut").innerHTML = `<div class="okbox">Saved <b>${r.result.added}</b> ${nKind === "owes" ? "balances" : "lessons"}${r.result.new_clients ? ` · ${r.result.new_clients} new clients` : ""}${r.result.skipped_duplicates_or_invalid ? ` · ${r.result.skipped_duplicates_or_invalid} skipped (already logged)` : ""}.</div>`;
+    $("#nText").value = ""; nRows = [];
+  } catch (e) { toast(e.message, true); }
+}
 $("#saveStart").onclick = async () => { S = await api("/api/settings", {ws: WS, ledger_start: $("#ledgerStart").value}); render(); toast("Ledger start saved"); };
 
 function renderClients() {

@@ -140,6 +140,46 @@ def sample_emails():
     return {"text": (config.SAMPLE_DIR / "zelle_emails.txt").read_text(encoding="utf-8")}
 
 
+class NotesPreview(BaseModel):
+    ws: str
+    kind: str = Field(pattern="^(schedule|owes)$")
+    text: str = Field(min_length=1, max_length=50_000)
+    week_start: str | None = None
+
+
+@app.post("/api/notes/preview")
+def notes_preview(body: NotesPreview):
+    from datetime import timedelta
+
+    from .notes import parse_owes, parse_schedule
+
+    state = _ws(body.ws)
+    today = date.fromisoformat(store.as_of(state))
+    if body.kind == "owes":
+        rows = parse_owes(body.text, state["clients"])
+    else:
+        start = date.fromisoformat(body.week_start) if body.week_start else today - timedelta(days=today.weekday())
+        rows = parse_schedule(body.text, state["clients"], start, today)
+    names = {k: v["name"] for k, v in state["clients"].items()}
+    for r in rows:
+        r["options"] = [{"id": i, "name": names[i]} for i in r["client_ids"]]
+    return {"rows": rows, "today": today.isoformat()}
+
+
+class NotesApply(BaseModel):
+    ws: str
+    kind: str = Field(pattern="^(schedule|owes)$")
+    rows: list[dict] = Field(max_length=500)
+
+
+@app.post("/api/notes/apply")
+def notes_apply(body: NotesApply):
+    state = _ws(body.ws)
+    result = store.apply_notes(state, body.kind, body.rows)
+    store.save(body.ws, state)
+    return {"result": result, "state": _view(body.ws, state)}
+
+
 class ClientUpdate(BaseModel):
     ws: str
     client_id: str
