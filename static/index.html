@@ -180,6 +180,19 @@ td input,td select{padding:6px 8px;width:100%}
     <div class="row" style="margin-top:10px"><button class="btn" id="nPreview">Preview</button><span class="muted small">Read by code on your computer. No AI, nothing saved until you confirm.</span></div>
     <div id="nOut" style="margin-top:12px"></div>
   </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="row space"><h3 style="margin:0">Prepaid packages</h3><span class="muted small">Private lessons logged after the purchase come off the package automatically.</span></div>
+    <div class="row" style="gap:12px;margin-top:12px">
+      <div style="flex:2;min-width:200px"><label>Student</label><br><select id="pClient" style="width:100%"></select></div>
+      <div><label>Package</label><br><select id="pTier"></select></div>
+      <div><label>Bought on</label><br><input type="date" id="pDate"></div>
+      <div><label>Already used</label><br><input type="number" id="pUsed" min="0" max="60" value="0" style="width:80px"></div>
+      <div><label>Price</label><br><input type="number" id="pPrice" min="0" style="width:100px"></div>
+      <div style="align-self:flex-end"><label class="row small" title="Tick for a package paid before you started using Encore, so no Zelle is expected"><input type="checkbox" id="pSettled" style="width:auto"> already paid</label></div>
+      <div style="align-self:flex-end"><button class="btn" id="pAdd">Add package</button></div>
+    </div>
+    <div id="pList" style="margin-top:12px"></div>
+  </div>
   <div class="card">
     <h3>Log one lesson</h3>
     <div class="row" style="gap:14px">
@@ -338,7 +351,7 @@ function render() {
     ["", radar ? attention : "—", "Radar: need a nudge"],
     ["", money(S.kpis.collected_this_month), "Zelle in this month"],
   ].map(([c, v, l]) => `<div class="card kpi ${c}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
-  renderRadar(); renderDrafts(); renderPromises(); renderLessons(); renderClients(); renderImports(); renderReplySelect();
+  renderRadar(); renderDrafts(); renderPromises(); renderLessons(); renderPackages(); renderClients(); renderImports(); renderReplySelect();
 }
 
 function renderRadar() {
@@ -347,7 +360,7 @@ function renderRadar() {
     $("#radarMeta").textContent = S.clients.length ? `${S.clients.length} clients, ${S.kpis.payments_total} Zelle payments loaded.` : "Import your Zelle CSV first (Import Zelle tab).";
     $("#radarSummary").innerHTML = ""; $("#radarList").innerHTML = ""; $("#draftBar").classList.add("hide"); return;
   }
-  $("#radarMeta").innerHTML = `Ran for ${fmtDate(r.as_of)} · ${r.sent_to_model} clients judged by the model, ${r.skipped.on_track_prefiltered} on-time payers decided by code, ${r.skipped.inactive} inactive skipped`;
+  $("#radarMeta").innerHTML = `Ran for ${fmtDate(r.as_of)} · ${r.sent_to_model} clients judged by the model, ${r.skipped.on_track_prefiltered} on-time payers${r.skipped.package_holders ? ` and ${r.skipped.package_holders} package holder${r.skipped.package_holders > 1 ? "s" : ""}` : ""} decided by code, ${r.skipped.inactive} inactive skipped`;
   $("#radarSummary").innerHTML = `<div class="summary">${esc(r.summary)}<div class="usage" style="margin-top:6px">${usageLine(r.usage)}</div></div>`;
   const items = Object.values(r.results).sort((a, b) => b.priority - a.priority || (a.status > b.status ? 1 : -1));
   const show = items.filter(i => (i.priority >= 2 || i.suggest_reminder) && byId(i.client_id)?.active !== false);
@@ -496,6 +509,31 @@ async function saveNotes() {
     $("#nText").value = ""; nRows = [];
   } catch (e) { toast(e.message, true); }
 }
+// ---------- prepaid packages
+function renderPackages() {
+  const keep = $("#pClient").value; $("#pClient").innerHTML = clientOptions(keep);
+  const tiers = S.package_tiers || {};
+  if (!$("#pTier").options.length) $("#pTier").innerHTML = Object.entries(tiers).map(([paid, free]) => `<option value="${paid}">${paid} paid + ${free} free = ${+paid + free} lessons</option>`).join("");
+  if (!$("#pDate").value) $("#pDate").value = S.as_of;
+  const c = byId($("#pClient").value), rate = c?.rates?.private || S.prices.private;
+  $("#pPrice").placeholder = money(+$("#pTier").value * rate).replace("$", "");
+  $("#pList").innerHTML = S.packages.length ? `<div class="tablewrap"><table><thead><tr><th>Student</th><th>Package</th><th>Bought</th><th>Price</th><th>Lessons left</th><th></th></tr></thead><tbody>${S.packages.map(p => {
+    const pct = Math.round(100 * p.remaining / p.total_lessons), low = p.remaining > 0 && p.remaining <= 2;
+    return `<tr><td>${esc(byId(p.client_id)?.name)}</td><td>${p.paid_lessons} + ${p.free_lessons} free</td><td>${fmtDate(p.date)}</td><td>${money(p.price)}${p.settled ? ' <span class="muted small">(paid before)</span>' : ""}</td>
+      <td style="min-width:170px"><div class="meter"><div style="width:${pct}%"></div></div><span class="small ${low ? "" : "muted"}" style="${low ? "color:var(--warn)" : ""}">${p.remaining} of ${p.total_lessons} left${p.remaining === 0 ? " (used up)" : low ? ": offer a renewal" : ""}</span></td>
+      <td><button class="btn ghost sm" data-pdel="${p.id}">Remove</button></td></tr>`;
+  }).join("")}</tbody></table></div>` : `<div class="muted small">No packages yet.</div>`;
+  $$("[data-pdel]").forEach(b => b.onclick = async () => { if (!confirm("Remove this package?")) return; S = await api("/api/packages/delete", {ws: WS, id: b.dataset.pdel}); render(); });
+}
+$("#pClient").onchange = $("#pTier").onchange = () => renderPackages();
+$("#pAdd").onclick = async () => {
+  const cid = $("#pClient").value; if (!cid) return toast("Pick a student", true);
+  try {
+    S = await api("/api/packages/add", {ws: WS, client_id: cid, paid: +$("#pTier").value, date: $("#pDate").value,
+      already_used: +$("#pUsed").value || 0, price: $("#pPrice").value === "" ? null : +$("#pPrice").value, settled: $("#pSettled").checked});
+    $("#pUsed").value = 0; $("#pPrice").value = ""; $("#pSettled").checked = false; render(); toast(`Package added for ${byId(cid).name}`);
+  } catch (e) { toast(e.message, true); }
+};
 $("#saveStart").onclick = async () => { S = await api("/api/settings", {ws: WS, ledger_start: $("#ledgerStart").value}); render(); toast("Ledger start saved"); };
 
 function renderClients() {

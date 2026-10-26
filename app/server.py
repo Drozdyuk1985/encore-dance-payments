@@ -66,6 +66,9 @@ def _view(ws: str, state: dict) -> dict:
             "payments_total": len(state["payments"]),
             "clients_total": len(clients),
         },
+        "packages": sorted((p for c in clients for p in (c["ledger"] or {}).get("packages", [])),
+                           key=lambda p: (p["remaining"] == 0, p["date"]), reverse=False),
+        "package_tiers": config.PACKAGE_TIERS,
         "prices": config.PRICES,
         "zelle_email": config.ZELLE_EMAIL,
         "studio": config.STUDIO_NAME,
@@ -138,6 +141,43 @@ def import_emails(body: EmailBody):
 @app.get("/api/sample_emails")
 def sample_emails():
     return {"text": (config.SAMPLE_DIR / "zelle_emails.txt").read_text(encoding="utf-8")}
+
+
+class IdBody(BaseModel):
+    ws: str
+    id: str
+
+
+class PackageBody(BaseModel):
+    ws: str
+    client_id: str
+    paid: int
+    date: str
+    already_used: int = Field(default=0, ge=0, le=60)
+    price: float | None = Field(default=None, ge=0)
+    settled: bool = False
+
+
+@app.post("/api/packages/add")
+def add_package(body: PackageBody):
+    state = _ws(body.ws)
+    if body.client_id not in state["clients"]:
+        raise HTTPException(404, "no such client")
+    try:
+        date.fromisoformat(body.date)
+        store.add_package(state, body.client_id, body.paid, body.date, body.already_used, body.price, body.settled)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    store.save(body.ws, state)
+    return _view(body.ws, state)
+
+
+@app.post("/api/packages/delete")
+def delete_package(body: IdBody):
+    state = _ws(body.ws)
+    state["packages"] = [p for p in state["packages"] if p["id"] != body.id]
+    store.save(body.ws, state)
+    return _view(body.ws, state)
 
 
 class NotesPreview(BaseModel):
@@ -252,11 +292,6 @@ def add_lesson(body: LessonBody):
         state["settings"]["ledger_start"] = body.date
     store.save(body.ws, state)
     return _view(body.ws, state)
-
-
-class IdBody(BaseModel):
-    ws: str
-    id: str
 
 
 @app.post("/api/lessons/delete")

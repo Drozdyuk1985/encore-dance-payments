@@ -169,3 +169,29 @@ def test_daily_budget_is_a_strict_cap(monkeypatch):
     with pytest.raises(llm.BudgetExceeded):
         llm.run_agent(agent="t", run_id="t", instructions="x", user_input="y", schema={"type": "object"})
     assert called == []  # refused before any model call was made
+
+
+
+def test_packages_cover_privates_then_charge_again():
+    from app.ledger import balance as bal
+    client = {"id": "C1", "rates": {}}
+    pack = {"id": "K1", "client_id": "C1", "date": "2026-10-01", "paid_lessons": 10, "free_lessons": 1,
+            "total_lessons": 11, "already_used": 9, "price": 1600.0, "settled": False}
+    lessons = [{"client_id": "C1", "date": f"2026-10-{d:02d}", "kind": "private", "price": 160.0} for d in (2, 9, 16)]
+    lessons.append({"client_id": "C1", "date": "2026-10-10", "kind": "group", "price": 70.0})
+    payments = [{"date": "2026-10-01", "amount": 1600.0}]
+    b = bal(client, lessons, payments, "2026-10-01", "2026-10-25", [pack])
+    # 2 lessons left on the package: Oct 2 and Oct 9 are covered; Oct 16 private and the group class are charged.
+    assert b["packages"][0]["remaining"] == 0 and b["lessons_covered_by_package"] == 2
+    assert b["owed"] == 230.0 and [l["date"] for l in b["unpaid_lessons"]] == ["2026-10-10", "2026-10-16"]
+
+
+def test_radar_decides_package_holders_without_the_model(monkeypatch):
+    monkeypatch.setattr(agents.llm, "run_agent", lambda **k: (_ for _ in ()).throw(AssertionError("model called")))
+    s = _empty_state()
+    s["settings"]["ledger_start"] = "2026-10-01"
+    s["clients"]["C1"] = {"id": "C1", "name": "Grace Lee", "payer_keys": [], "payer_names": [], "rates": {}, "active": True}
+    store.add_package(s, "C1", 10, "2026-09-01", already_used=9, settled=True)
+    r = agents.run_radar(s, "t")
+    assert r["results"]["C1"]["status"] == "package_or_prepaid" and "2 of 11" in r["results"]["C1"]["reason"]
+    assert r["sent_to_model"] == 0

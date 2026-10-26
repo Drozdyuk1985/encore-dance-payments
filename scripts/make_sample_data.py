@@ -113,7 +113,13 @@ seed = {
         {"payer": "ELI ROSEN", "date": "2026-10-22", "kind": "group"},
         {"payer": "IGOR VOLKOV", "date": "2026-10-15", "kind": "group"},
         {"payer": "IGOR VOLKOV", "date": "2026-10-22", "kind": "group"},
+        {"client": "Grace Lee", "date": "2026-10-13", "kind": "private"},
+        {"client": "Grace Lee", "date": "2026-10-20", "kind": "private"},
     ],
+    # Paid by check before tracking started, so there is no Zelle row for her.
+    "extra_clients": [{"name": "Grace Lee", "phone": "555-0115", "language": "English",
+                       "notes": "Prepaid 10 + 1 package (paid by check)."}],
+    "packages": [{"client": "Grace Lee", "paid": 10, "date": "2026-09-01", "already_used": 7, "settled": True}],
 }
 (OUT / "seed.json").write_text(json.dumps(seed, indent=1), encoding="utf-8")
 print(f"wrote {len(lines) - 1} rows ({len(payments)} Zelle payments) to {OUT}")

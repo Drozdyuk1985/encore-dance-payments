@@ -22,7 +22,8 @@ def ledger_for(state: dict, cid: str) -> dict | None:
     start = state["settings"].get("ledger_start")
     if not start:
         return None
-    return balance(state["clients"][cid], state["lessons"], _client_payments(state, cid), start, store.as_of(state))
+    return balance(state["clients"][cid], state["lessons"], _client_payments(state, cid), start, store.as_of(state),
+                   state.get("packages", []))
 
 
 def all_stats(state: dict) -> dict[str, dict]:
@@ -34,7 +35,7 @@ def all_stats(state: dict) -> dict[str, dict]:
 def run_radar(state: dict, run_id: str, prefilter: bool = True) -> dict:
     """Classify every recently active client. With prefilter, obvious on-track clients skip the model."""
     stats = all_stats(state)
-    rows, skipped = [], {"inactive": 0, "on_track_prefiltered": 0, "marked_inactive_by_owner": 0}
+    rows, skipped = [], {"inactive": 0, "on_track_prefiltered": 0, "marked_inactive_by_owner": 0, "package_holders": 0}
     code_results = {}
     for cid, s in stats.items():
         c = state["clients"][cid]
@@ -43,6 +44,16 @@ def run_radar(state: dict, run_id: str, prefilter: bool = True) -> dict:
             continue
         led = ledger_for(state, cid)
         owes = bool(led and led["owed"] > 0)
+        live = [p for p in (led or {}).get("packages", []) if p["remaining"] > 0]
+        if live and not owes:  # prepaid: silence is expected, so code decides (no tokens, no false "forgot")
+            left, total = sum(p["remaining"] for p in live), sum(p["total_lessons"] for p in live)
+            low = left <= 2
+            skipped["package_holders"] += 1
+            code_results[cid] = {"client_id": cid, "status": "package_or_prepaid", "priority": 3 if low else 1,
+                                 "suggest_reminder": False, "decided_by": "code",
+                                 "reason": f"Prepaid package: {left} of {total} lessons left"
+                                           + ("; time to offer a renewal." if low else ".")}
+            continue
         if not s.get("n_payments"):
             if owes:  # e.g. a balance carried over from Notes for someone with no Zelle history yet
                 code_results[cid] = {"client_id": cid, "status": "owes_balance", "priority": 5, "suggest_reminder": True,
@@ -128,6 +139,8 @@ def _lesson_list(unpaid: list[dict]) -> str:
             parts.append(f"{one if len(days) == 1 else many} on {join(days)}")
     if any(l["kind"] == "balance" for l in unpaid):
         parts.append("earlier balance")
+    if any(l["kind"] == "package" for l in unpaid):
+        parts.append("lesson package")
     return "your " + " and ".join(parts) if parts else "your recent lessons"
 
 
@@ -280,7 +293,9 @@ def handle_reply(state: dict, run_id: str, cid: str, text: str) -> dict:
             return {"note": "The owner has not started logging lessons, so no exact balance is known."}
         seen_amounts.update({led["owed"], led["paid"], led["charged"], *[l["price"] for l in led["unpaid_lessons"]]})
         return {"owed": led["owed"], "unpaid_lessons": [{"date": l["date"], "kind": l["kind"], "price": l["price"]}
-                                                       for l in led["unpaid_lessons"]], "credit": led["credit"]}
+                                                       for l in led["unpaid_lessons"]], "credit": led["credit"],
+                "prepaid_packages": [{"bought": p["date"], "lessons": p["total_lessons"], "remaining": p["remaining"]}
+                                     for p in led["packages"]]}
 
     def recent_payments(days: int) -> dict:
         days = max(1, min(int(days), 120))

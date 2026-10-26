@@ -31,6 +31,7 @@ def _empty() -> dict:
         "flags": [],
         "radar": None,
         "imports": [],
+        "packages": [],
         "settings": {"ledger_start": None, "as_of": None},
     }
 
@@ -41,7 +42,9 @@ def load(ws: str) -> dict:
         state = _seed_sample() if ws == "sample" else _empty()
         save(ws, state)
         return state
-    return json.loads(p.read_text(encoding="utf-8"))
+    state = json.loads(p.read_text(encoding="utf-8"))
+    state.setdefault("packages", [])
+    return state
 
 
 def save(ws: str, state: dict) -> None:
@@ -202,12 +205,19 @@ def _seed_sample() -> dict:
         src, dst = client_for_payer(state, normalize_name(payer)), client_for_payer(state, normalize_name(target))
         if src and dst:
             merge_clients(state, dst, src)
+    for extra in seed.get("extra_clients", []):
+        cid = _next_client_id(state)
+        state["clients"][cid] = {"id": cid, "payer_keys": [], "payer_names": [], "email": "", "rates": {},
+                                 "active": True, **extra}
+    by_name = lambda n: next((k for k, c in state["clients"].items() if c["name"] == n), None)
     for l in seed["lessons"]:
-        cid = client_for_payer(state, normalize_name(l["payer"]))
+        cid = by_name(l["client"]) if "client" in l else client_for_payer(state, normalize_name(l["payer"]))
         if cid:
             from .ledger import lesson_price
             state["lessons"].append({"id": new_id("L"), "client_id": cid, "date": l["date"], "kind": l["kind"],
                                      "price": lesson_price(state["clients"][cid], l["kind"])})
+    for k in seed.get("packages", []):
+        add_package(state, by_name(k["client"]), k["paid"], k["date"], k.get("already_used", 0), settled=k.get("settled", False))
     for c in state["clients"].values():
         c["name"] = display_name(c["name"])
     state["imports"][0]["imported_on"] = state["settings"]["as_of"]
@@ -255,3 +265,22 @@ def apply_notes(state: dict, kind: str, rows: list[dict]) -> dict:
         if not start or item["date"] < start:
             state["settings"]["ledger_start"] = item["date"]
     return {"added": added, "skipped_duplicates_or_invalid": skipped, "new_clients": new_clients}
+
+
+def add_package(state: dict, client_id: str, paid: int, day: str, already_used: int = 0,
+                price: float | None = None, settled: bool = False) -> dict:
+    from .config import PACKAGE_TIERS
+    from .ledger import lesson_price
+
+    if paid not in PACKAGE_TIERS:
+        raise ValueError(f"Package must be one of {sorted(PACKAGE_TIERS)} paid lessons")
+    total = paid + PACKAGE_TIERS[paid]
+    pack = {"id": new_id("K"), "client_id": client_id, "date": day, "paid_lessons": paid,
+            "free_lessons": PACKAGE_TIERS[paid], "total_lessons": total,
+            "already_used": max(0, min(int(already_used), total)),
+            "price": round(float(price if price is not None else paid * lesson_price(state["clients"][client_id], "private")), 2),
+            "settled": bool(settled)}
+    state.setdefault("packages", []).append(pack)
+    if not state["settings"].get("ledger_start"):
+        state["settings"]["ledger_start"] = day
+    return pack
