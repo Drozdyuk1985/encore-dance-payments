@@ -70,7 +70,7 @@ label{color:var(--muted);font-size:13px}
 .summary{border:1px dashed rgba(255,45,149,.5);border-radius:14px;padding:14px;margin:14px 0;background:rgba(255,45,149,.06);line-height:1.5}
 .usage{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .drafts{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
-.draft textarea{min-height:150px}
+.draft textarea{min-height:236px}
 a.btn{text-decoration:none;display:inline-block}
 .badge{font-size:11px;color:var(--good)}
 .badge.warn{color:var(--warn)}
@@ -243,6 +243,17 @@ td input,td select{padding:6px 8px;width:100%}
     <p class="muted small" style="margin-top:0">In Chase: open the business checking account → <b>Download account activity</b> → choose <b>CSV</b> and a date range. Encore keeps only incoming Zelle payments (date, sender, amount). Every other row, like payroll, taxes, loans and card payments, is thrown away right away and never stored or shown to the AI.</p>
     <div class="row"><input type="file" id="csvFile" accept=".csv,.CSV,text/csv"><button class="btn" id="importBtn">Import</button></div>
     <div id="importResult" style="margin-top:14px"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>3 · Cash or check</h3>
+    <p class="muted small" style="margin-top:0">Paid in person? Record it here so the balance is right. Cash and checks aren't in the Zelle data, so they can't be counted twice.</p>
+    <div class="row" style="gap:12px">
+      <div style="flex:2;min-width:200px"><label>Student</label><br><select id="cClient" style="width:100%"></select></div>
+      <div><label>Amount</label><br><input type="number" id="cAmount" min="1" style="width:110px"></div>
+      <div><label>Date</label><br><input type="date" id="cDate"></div>
+      <div><label>How</label><br><select id="cMethod"><option>cash</option><option>check</option></select></div>
+      <div style="align-self:flex-end"><button class="btn" id="cAdd">Record payment</button></div>
+    </div>
   </div>
   <div class="card" style="margin-top:14px">
     <h3>Import history</h3><div id="importHistory" class="small muted">No imports yet.</div>
@@ -577,6 +588,8 @@ function renderImports() {
     : `${i.rows_in_file} rows read · <b>${i.new_payments}</b> new Zelle payments${i.confirmed_email_payments ? ` · ${i.confirmed_email_payments} email payments confirmed` : ""} · ${i.rows_dropped_not_zelle_income} non-Zelle rows discarded`) + ` · ${i.new_clients} new clients</div>`).join("") : "No imports yet.";
   $("#resetSample").classList.toggle("hide", WS !== "sample");
   $("#sampleEmails").classList.toggle("hide", WS !== "sample");
+  const keep = $("#cClient").value; $("#cClient").innerHTML = clientOptions(keep);
+  if (!$("#cDate").value) $("#cDate").value = S.as_of;
 }
 const EMAIL_KIND = {imported: ["on_track", "counted"], duplicate: ["one_time", "already counted"], suspicious: ["likely_stopped", "blocked: suspicious"],
   not_a_payment: ["one_time", "not a payment"], unknown_format: ["maybe_forgot", "could not read"]};
@@ -610,6 +623,14 @@ $("#importBtn").onclick = async () => {
     $("#importResult").innerHTML = `<div class="okbox">Read <b>${s.rows_in_file}</b> rows. Kept <b>${s.zelle_payments_found}</b> incoming Zelle payments (${s.new_payments} new, ${s.duplicates_skipped} already imported). Discarded <b>${s.rows_dropped_not_zelle_income}</b> other rows. ${s.new_clients} new clients created.</div>`;
   } catch (e) { $("#importResult").innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
   busy(btn, false);
+};
+$("#cAdd").onclick = async () => {
+  const cid = $("#cClient").value, amount = +$("#cAmount").value;
+  if (!cid || !amount) return toast("Pick a student and an amount", true);
+  try {
+    S = await api("/api/payments/manual", {ws: WS, client_id: cid, amount, date: $("#cDate").value || S.as_of, method: $("#cMethod").value});
+    $("#cAmount").value = ""; render(); toast(`Recorded ${money(amount)} ${$("#cMethod").value} from ${byId(cid).name}`);
+  } catch (e) { toast(e.message, true); }
 };
 $("#copyNotes").onclick = async () => {
   const owing = S.clients.filter(c => (c.ledger?.owed || 0) > 0).sort((a, b) => b.ledger.owed - a.ledger.owed);

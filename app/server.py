@@ -148,6 +148,28 @@ class IdBody(BaseModel):
     id: str
 
 
+class CashBody(BaseModel):
+    ws: str
+    client_id: str
+    amount: float = Field(gt=0, le=20_000)
+    date: str
+    method: str = Field(default="cash", pattern="^(cash|check)$")
+
+
+@app.post("/api/payments/manual")
+def manual_payment(body: CashBody):
+    state = _ws(body.ws)
+    if body.client_id not in state["clients"]:
+        raise HTTPException(404, "no such client")
+    try:
+        date.fromisoformat(body.date)
+    except ValueError:
+        raise HTTPException(400, "date must be YYYY-MM-DD")
+    store.add_manual_payment(state, body.client_id, body.amount, body.date, body.method)
+    store.save(body.ws, state)
+    return _view(body.ws, state)
+
+
 class PackageBody(BaseModel):
     ws: str
     client_id: str

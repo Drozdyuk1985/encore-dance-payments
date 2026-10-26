@@ -284,3 +284,13 @@ def add_package(state: dict, client_id: str, paid: int, day: str, already_used: 
     if not state["settings"].get("ledger_start"):
         state["settings"]["ledger_start"] = day
     return pack
+
+
+def add_manual_payment(state: dict, client_id: str, amount: float, day: str, method: str = "cash") -> dict:
+    """Cash or check paid in person. Not in the Zelle data, so it cannot be double-counted with it."""
+    c = state["clients"][client_id]
+    p = {"id": new_id("M"), "date": day, "payer": c["name"], "payer_key": "", "amount": round(float(amount), 2),
+         "source": method, "client_id": client_id}
+    state["payments"].append(p)
+    state["payments"].sort(key=lambda x: (x["date"], x["id"]))
+    return p

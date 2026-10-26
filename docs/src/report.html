@@ -46,14 +46,14 @@ code{background:#f6eff3;padding:1px 6px;border-radius:5px;font-size:.92em}
 .kpi{background:var(--black);color:#fff;border-radius:14px;padding:14px}
 .kpi .v{font-size:26px;font-weight:800;color:var(--pink)}
 .kpi .l{font-size:12px;color:#d6c6cf;text-transform:uppercase;letter-spacing:.8px}
-footer{margin-top:50px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+footer{margin-top:24px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 @media (max-width:700px){.two,.kpis{grid-template-columns:1fr 1fr}.cover h1{font-size:40px}.meta{grid-template-columns:1fr}}
 @media print{
   body{font-size:10pt;line-height:1.4}
   .wrap{padding:0 6px 20px}
-  figure img{max-height:3.8in;width:auto;max-width:100%;margin:0 auto}
-  .two figure img{max-height:3.6in}
-  figure.narrow img{max-height:3.1in}
+  figure img{max-height:3.4in;width:auto;max-width:100%;margin:0 auto}
+  .two figure img{max-height:3.3in}
+  figure.narrow img{max-height:2.8in}
   h2{margin-top:28px}
   table{font-size:9pt}
   .cover{padding:30px 0 24px}
@@ -116,7 +116,7 @@ footer{margin-top:50px;font-size:13px;color:var(--muted);border-top:1px solid va
 </table>
 <p><b>What Encore does that those don't:</b></p>
 <ul>
-  <li><b>It works with the money as it actually arrives.</b> It reads Zelle notification emails (the same evening) and the Chase export (the full record), keeps only incoming Zelle, counts a payment seen in both only once, and handles payers who aren't the dancer (parents, spouses, companies) by learning that "Mark Klein" and "Ruth Klein" pay for Leo.</li>
+  <li><b>It works with the money as it actually arrives.</b> It reads Zelle notification emails (the same evening) and the Chase export (the full record), keeps only incoming Zelle, counts a payment seen in both only once, records cash or check by hand, and handles payers who aren't the dancer (parents, spouses, companies) by learning that "Mark Klein" and "Ruth Klein" pay for Leo.</li>
   <li><b>It fits how the owner already works.</b> Paste a week (or more) from the Apple Notes "Running schedule" and it becomes logged lessons; paste the "who owes me" lines and they become balances. Both are read by code (no AI), shown as a preview, and saved only when the owner confirms. Canceled lessons are skipped, and future ones are charged only when their date arrives.</li>
   <li><b>It tracks prepaid packages.</b> Studios sell packs with free lessons (10 paid + 1 free, 20 + 3, 30 + 5, 40 + 7, 50 + 10). Private lessons come off the package automatically, the owner sees "7 of 11 left" and a renewal heads-up near the end, and package holders are never flagged as late.</li>
   <li><b>It spots silence.</b> The Payment Radar learns each client's payment rhythm and notices when a weekly payer has gone quiet, even before the owner logs a single lesson.</li>
@@ -152,7 +152,7 @@ footer{margin-top:50px;font-size:13px;color:var(--muted);border-top:1px solid va
     <figure class="narrow"><img src="{{img:15_paste_schedule}}" alt="Pasting the Running schedule note"><figcaption><b>Figure 2.</b> Pasting the Apple Notes schedule: code finds each lesson, matches first names to clients, skips the canceled one, offers "Jordan" as a new client, and marks next Thursday as upcoming. Nothing is saved until "Save checked rows".</figcaption></figure></li>
   <li><b>Payment Radar (agent 1).</b> Code skips 4 clients who are obviously paying on time and sends 10 to the model as anonymous statistics. In one call (2,991 input / 1,291 output tokens, $0.0009) the Radar returns a category, a priority and a reason for each. It caught <i>Anya Koval</i> (weekly payer, silent for 27 days) and <i>Sara Lindqvist</i> (every 21 days, now 44) as <b>maybe forgot</b>. It labeled <i>Lucas Moreau</i>'s silence as expected after a $1,500 package, and <i>David Chen</i> as likely stopped. <i>Grace Lee</i>, on a prepaid 10 + 1 package with 2 lessons left, never reaches the model: code marks her prepaid and suggests offering a renewal instead of a reminder. Names are put back in on my computer.
     <figure><img src="{{img:02_radar}}" alt="Payment Radar results"><figcaption><b>Figure 3.</b> Radar output. The summary and reasons are the model's; the dollar amounts on the right come from the ledger.</figcaption></figure></li>
-  <li><b>Collector (agent 2).</b> The 6 suggested clients are pre-selected. One call writes all 6 drafts. Code checked each one and all passed on the first try. The Ukrainian-speaking client got a Ukrainian message, and the check-ins (where no exact amount is known) correctly mention no amount at all.
+  <li><b>Collector (agent 2).</b> The 6 suggested clients are pre-selected. One call writes all 6 drafts. Code checked each one and all passed on the first try. The drafts follow the owner's own writing style ("Hello …, I hope you are well. … Kindly, DNA Dance Academy"), the Ukrainian-speaking client got the same message in Ukrainian, and the check-ins (where no exact amount is known) correctly mention no amount at all.
     <figure><img src="{{img:03_drafts}}" alt="Reminder drafts ready to send"><figcaption><b>Figure 4.</b> Drafts with exact amounts and lesson dates filled in by code. "Text" opens the owner's Messages app with the text ready to send.</figcaption></figure></li>
   <li><b>Reply handler (agent 3).</b> Priya answers "I already paid you on Tuesday, check again!" The agent calls <code>get_balance</code> ($320 owed), then <code>recent_payments</code> (none), then <code>find_payments_by_amount</code> for any $320 from any payer (none). Then it calls <code>flag_for_owner</code> and drafts a polite request for the date, amount and sender name. Four model calls, $0.0005. It didn't take her word for it, and it didn't accuse her either.
     <figure><img src="{{img:04_reply_claims_paid}}" alt="Reply handler verifying a claim of payment"><figcaption><b>Figure 5.</b> The trace panel shows exactly what text the model saw (names masked) and every tool call it made.</figcaption></figure></li>
@@ -241,15 +241,19 @@ footer{margin-top:50px;font-size:13px;color:var(--muted);border-top:1px solid va
 </ul>
 <div class="callout dark"><b>What the miss taught me.</b> Payment history alone can't tell "forgot to pay" from "stopped coming". Both look like silence. That's exactly why Encore has the <b>lesson ledger</b>: once lessons are logged, "owes" is a fact computed by code, not a guess. It's also why a human approves every message, since a wrong guess costs one unsent draft, not an awkward text. Based on this test I added a one-tap <b>"Stopped coming"</b> button to Radar results, which removes the client from future runs so the same false alarm doesn't repeat.</div>
 
-<h3>Expected impact (estimates, with sources)</h3>
+<h3>Timed test: the usual way vs Encore (Oct 26, 2026)</h3>
+<p>I did the same week's follow-up twice and timed both: first my usual way (the "Running schedule" note, Zelle emails, working out who owes, writing the texts), then in Encore (paste the schedule, add the Zelle emails, run the Radar, review the drafts).</p>
 <table>
-  <tr><th>Metric</th><th>Before (owner estimate)</th><th>With Encore</th><th>Source</th></tr>
-  <tr><td>Time chasing payments</td><td>2+ hours / week</td><td>About 10–15 min / week: log each lesson (5 s), a nightly check (the AI part takes 12–25 s, measured), review and send drafts</td><td>Owner estimate; app timings measured</td></tr>
-  <tr><td>Payments slipping through</td><td>5+ per month</td><td>Every logged, unpaid lesson appears in the ledger the same night, so a slip can only happen if the lesson wasn't logged</td><td>Design; to be measured in a 4-week pilot</td></tr>
-  <tr><td>Money recovered</td><td>—</td><td>If half the slips are caught: about $175–$400 a month at list prices</td><td>Estimate: 5 slips × 50% × $70–$160</td></tr>
-  <tr><td>Cost to run</td><td>—</td><td>About $0.11 a month in AI</td><td>Measured tokens × course prices</td></tr>
+  <tr><th>Measured</th><th>Usual way</th><th>Encore</th></tr>
+  <tr><td>Time for one follow-up session (1–2 people to check)</td><td class="num">≈ 5 min</td><td class="num">≈ 2 min (−60%)</td></tr>
+  <tr><td>People owing as of Oct 26</td><td class="num">0</td><td class="num">0</td></tr>
+  <tr><td>Missed by Encore / flagged wrongly</td><td class="num">—</td><td class="num">0 / 0</td></tr>
 </table>
-<p>The biggest impact is not the dollars. It's that chasing money stops depending on my memory at 11 pm. And because Encore is configured by a few settings (studio name, Zelle email, prices), any small teacher or studio paid by Zelle can use it the same way.</p>
+<p class="small">Timed by me, the owner. The manual round came first, so Encore had a small learning advantage. With 0 people owing that week, the test measured speed and accuracy; the drafts were checked separately and now follow my own writing style ("Hello …, I hope you are well. … Kindly, DNA Dance Academy").</p>
+<div class="callout dark">"I think it is a great tool for keeping track and reviewing, because it makes it systematic. It's a process versus no process, and process always wins. It tracks Zelle and cash payments: Venmo and credit cards take a processing fee, and these don't, but they require more time to monitor. And if I assign this to a staff member, they can do it without knowing who is who, just with access to the running schedule, the Chase CSV and the emails. So I can delegate it instead of doing it myself."<br><span style="color:#ff8cc4">Denys Drozdyuk, owner, DNA Dance Academy</span></div>
+
+<h3>What that means</h3>
+<p>The biggest impact is not the minutes or the dollars. It's turning payment follow-up from something that depends on my memory at 11 pm into a <b>repeatable process</b>, one I can hand to a staff member. It also makes fee-free payments (Zelle and cash) as easy to manage as card payments, without paying a processor's fee on every lesson. In money terms, if Encore catches half of the 5+ payments that slip each month, that's roughly $175–$400 a month at list prices (an estimate: 5 × 50% × $70–$160), for about $0.11 a month in AI. Because Encore is configured by a few settings (studio name, Zelle email, prices), any small teacher or studio paid by Zelle can use it the same way.</p>
 
 <!-- 8. LIMITS -->
 <h2><span class="n">8</span>Limits and next steps</h2>
@@ -260,7 +264,7 @@ footer{margin-top:50px;font-size:13px;color:var(--muted);border-top:1px solid va
   <li><b>Imports are manual:</b> download Zelle emails from Gmail (or paste them) and download the CSV. The email parser reads Chase's actual alert layout ("NAME sent you money", "Amount", "Sent on", "Memo"), which I checked against a real alert from my inbox; other banks' formats fall back to the Email Reader agent.</li>
   <li><b>Packages cover private lessons only</b>; group drop-ins are always charged per class.</li>
   <li><b>Single user, local.</b> No login and no hosting; a teacher with several studios would need separate setups.</li>
-  <li><b>Not measured yet:</b> a multi-week pilot with before-and-after numbers.</li>
+  <li><b>Short test:</b> one timed session in a week when nobody owed. A multi-week pilot would measure recovered payments, not just speed.</li>
 </ul>
 <h3>With another month</h3>
 <ol>
@@ -272,10 +276,7 @@ footer{margin-top:50px;font-size:13px;color:var(--muted);border-top:1px solid va
   <li><b>A teaching-music helper</b> (another studio pain point): slow down or loop a track section for practice, with count-ins.</li>
 </ol>
 
-<footer>
-  Encore · Denys Drozdyuk · MGT 409 Final Project · Repo (public): <a href="https://github.com/Drozdyuk1985/encore-dance-payments">github.com/Drozdyuk1985/encore-dance-payments</a><br>
-  All screenshots show the fictional Sample studio that ships with the repo. No real client names, amounts or bank data appear in this report.
-</footer>
+<footer>Encore · Denys Drozdyuk · MGT 409 · Repo (public): <a href="https://github.com/Drozdyuk1985/encore-dance-payments">github.com/Drozdyuk1985/encore-dance-payments</a> · Screenshots show the fictional Sample studio; no real client data appears here.</footer>
 </div>
 </body>
 </html>

@@ -106,11 +106,19 @@ Every message MUST:
 2. Use only these placeholders: {first_name}, {amount}, {zelle_email}, {lesson_list}.
 3. Contain no typed dollar figures, no phone numbers, no email addresses (only {zelle_email}).
 4. Never threaten: no late fees, interest, collections, legal action or anything the studio has not said.
-5. Be 1 to 3 sentences, under 400 characters, and may use at most one emoji.
+5. Stay under 450 characters (short sentences, as in the house style); at most one emoji, and none in the house style.
 6. Make it easy: say "Zelle to {zelle_email}".
 7. If "fix_these_problems" is present for an item, it is a retry: rewrite that message to fix every listed problem.
 
 Return exactly one draft for each client_id you were given.
+
+HOUSE STYLE (the owner's own way of writing, follow it for English messages):
+- Open with "Hello {first_name}," then "I hope you are well."
+- Then a short, polite sentence: "Just a quick reminder about the fee of {amount} for {lesson_list}." (check-ins:
+  "Just a quick note: I don't think I've seen a Zelle for your recent lessons yet.")
+- Then "Thank you. Please Zelle to {zelle_email}." and "Please let me know if you have any questions."
+- Sign off on a new line: "Kindly," then "DNA Dance Academy" (or the studio name).
+- Warm and professional; no emoji in this style. For other languages, keep the same structure, translated naturally.
 
 Good examples (style only, never copy them word for word):
 - balance, friendly, English: "Hi {first_name}! Quick reminder about {amount} for {lesson_list}. You can Zelle
