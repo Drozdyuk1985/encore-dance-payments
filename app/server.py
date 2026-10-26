@@ -105,6 +105,41 @@ def import_bank(body: ImportBody):
     return {"summary": summary, "state": _view(body.ws, state)}
 
 
+class EmailFile(BaseModel):
+    name: str = ""
+    text: str = Field(max_length=2_000_000)
+
+
+class EmailBody(BaseModel):
+    ws: str
+    pasted: str = Field(default="", max_length=500_000)
+    files: list[EmailFile] = Field(default_factory=list, max_length=200)
+    use_ai: bool = True
+
+
+@app.post("/api/import_emails")
+def import_emails(body: EmailBody):
+    from .emails import from_eml, split_pasted
+
+    state = _ws(body.ws)
+    mails = []
+    for f in body.files:
+        mails += [from_eml(f.text)] if f.name.lower().endswith(".eml") else split_pasted(f.text)
+    if body.pasted.strip():
+        mails += split_pasted(body.pasted)
+    if not mails:
+        raise HTTPException(400, "No emails found. Paste the email text or choose .eml files.")
+    out = agents.read_zelle_emails(state, _run_id(), mails[:200], use_ai=body.use_ai)
+    store.save(body.ws, state)
+    out["state"] = _view(body.ws, state)
+    return out
+
+
+@app.get("/api/sample_emails")
+def sample_emails():
+    return {"text": (config.SAMPLE_DIR / "zelle_emails.txt").read_text(encoding="utf-8")}
+
+
 class ClientUpdate(BaseModel):
     ws: str
     client_id: str

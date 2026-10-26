@@ -1,12 +1,13 @@
 # Encore: the payment desk for a small dance studio
 
 Encore finds lesson payments that students forgot to send, then drafts friendly reminders the owner can send from their own phone.
-It reads the studio's Chase bank export, keeps only incoming Zelle payments, compares them with logged lessons, and uses three AI agents:
+It reads Zelle notification emails and the studio's Chase bank export, keeps only incoming Zelle payments (a payment seen in both counts once), compares them with logged lessons, and uses three AI agents plus a small Email Reader:
 
 | Agent | Job | Tools / checks |
 |---|---|---|
 | **Payment Radar** | Spots regulars whose payments have gone quiet (forgot vs. stopped vs. prepaid) | Reads rhythm statistics computed by code; code overrides it when the ledger shows a balance |
 | **Collector** | Writes short reminders in each client's language | Every draft is checked by code (exact amount placeholder, Zelle email, no threats) and retried or replaced by a template |
+| **Email Reader** | Reads only Zelle emails whose format code doesn't recognise | Its payer name and amount count only if they appear word for word in the email; scam emails are blocked by code first |
 | **Reply handler** | Reads a student's answer ("I already paid", "can I pay Friday?") | `get_balance`, `recent_payments`, `find_payments_by_amount`, `record_promise`, `flag_for_owner`. No tool can mark anyone as paid |
 
 Built for DNA Dance Academy (private lessons $160, group drop-in $70, Zelle to `info@dnadanceacademy.com`).
@@ -48,14 +49,15 @@ The app opens on the **Sample studio**: fictional students and a made-up Chase e
 2. **Draft reminders for selected**. Check the drafts (Russian and Ukrainian clients get their own language) and press **Text** to open Messages.
 3. **Replies** → pick *Priya Shah* → click **"I paid"** → **Check this reply**. The agent checks the bank record with its tools, finds no payment and flags it.
 4. Same tab → pick *Eli Rosen* → **Attack**. The injection is blocked before it reaches the AI.
-5. **Tokens & cost** shows the real token counts and cost of every call you just made.
+5. **Import Zelle** → **Load sample emails** → **Read emails**. Two new payments are counted, a duplicate is skipped, a fake "PENDING" email is blocked, and one unusual email is read by the Email Reader.
+6. **Tokens & cost** shows the real token counts and cost of every call you just made.
 
 **Reset sample studio** (Import tab) restores the demo data at any time.
 
 ### Using real data instead of the sample
 
-Switch the header toggle to **My studio**, open **Import Zelle**, and upload a Chase CSV
-(Chase → account → *Download account activity* → CSV). Only incoming Zelle rows are kept. Your data is stored in
+Switch the header toggle to **My studio**, open **Import Zelle**, and drag in Zelle emails from Mail (.eml) and/or upload a Chase CSV
+(Chase → account → *Download account activity* → CSV). **Copy who owes for Notes** (Tonight tab) gives lines like `Alex $160` for an Apple Notes to-do list. Only incoming Zelle rows are kept. Your data is stored in
 `data/workspaces/real/`, which is git-ignored and never leaves your computer except as client IDs and payment
 statistics sent to the model (no names, no bank details).
 
@@ -95,6 +97,7 @@ python scripts/screenshots.py       # demo walkthrough screenshots (needs `pip i
 ```
 app/config.py    settings, .env lookup (repo, then parent), prices, budgets
 app/bank.py      Chase CSV → incoming Zelle payments only
+app/emails.py    Zelle notification emails → payments; scam detection
 app/radar.py     payment-rhythm statistics (pure code)
 app/ledger.py    exact balances from logged lessons (pure code)
 app/agents.py    Radar, Collector, Reply handler + the checks around them

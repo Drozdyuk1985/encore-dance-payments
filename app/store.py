@@ -81,45 +81,84 @@ def client_for_payer(state: dict, payer_key: str) -> str | None:
     return None
 
 
+def _client_id_for_new_payer(state: dict, p: dict) -> tuple[str, bool]:
+    cid = client_for_payer(state, p["payer_key"])
+    if cid:
+        return cid, False
+    cid = _next_client_id(state)
+    state["clients"][cid] = {"id": cid, "name": p["payer"], "payer_keys": [p["payer_key"]], "payer_names": [p["payer"]],
+                             "phone": "", "email": "", "language": "English", "notes": "", "rates": {}, "active": True}
+    return cid, True
+
+
+def _same_payment(a: dict, payer_key: str, amount: float, day: str) -> bool:
+    """Email and bank copies of one Zelle: same payer and amount, dates at most 3 days apart."""
+    return (a["payer_key"] == payer_key and abs(a["amount"] - amount) < 0.01
+            and abs((date.fromisoformat(a["date"]) - date.fromisoformat(day)).days) <= 3)
+
+
 def import_bank(state: dict, csv_text: str, filename: str = "") -> dict:
     parsed = parse_chase_csv(csv_text)
     known = {p["id"] for p in state["payments"]}
-    added, new_clients = 0, 0
+    added, new_clients, confirmed = 0, 0, 0
     for p in parsed["payments"]:
         if p["id"] in known:
             continue
-        cid = client_for_payer(state, p["payer_key"])
-        if cid is None:
-            cid = _next_client_id(state)
-            state["clients"][cid] = {
-                "id": cid,
-                "name": p["payer"],
-                "payer_keys": [p["payer_key"]],
-                "payer_names": [p["payer"]],
-                "phone": "",
-                "email": "",
-                "language": "English",
-                "notes": "",
-                "rates": {},
-                "active": True,
-            }
-            new_clients += 1
-        p["client_id"] = cid
+        twin = next((e for e in state["payments"] if e.get("source") == "email" and not e.get("bank_confirmed")
+                     and _same_payment(e, p["payer_key"], p["amount"], p["date"])), None)
+        if twin:  # already counted from the email; the bank line just confirms it
+            twin.update(bank_confirmed=True, bank_id=p["id"], date=p["date"])
+            confirmed += 1
+            continue
+        cid, is_new = _client_id_for_new_payer(state, p)
+        new_clients += is_new
+        p.update(client_id=cid, source="bank")
         state["payments"].append(p)
+        known.add(p["id"])
         added += 1
     state["payments"].sort(key=lambda p: (p["date"], p["id"]))
     summary = {
+        "kind": "bank",
         "file": filename,
         "rows_in_file": parsed["rows_total"],
         "zelle_payments_found": parsed["rows_kept"],
         "rows_dropped_not_zelle_income": parsed["rows_total"] - parsed["rows_kept"] - parsed["rows_skipped_bad"],
         "new_payments": added,
-        "duplicates_skipped": parsed["rows_kept"] - added,
+        "confirmed_email_payments": confirmed,
+        "duplicates_skipped": parsed["rows_kept"] - added - confirmed,
         "new_clients": new_clients,
         "imported_on": date.today().isoformat(),
     }
     state["imports"].append(summary)
     return summary
+
+
+def import_email_payments(state: dict, results: list[dict], label: str = "Zelle emails") -> dict:
+    """Add payments read from Zelle emails. `results` are emails.classify() outputs (kind == 'payment')."""
+    added, dupes, new_clients, rows = 0, 0, 0, []
+    for r in results:
+        if r.get("kind") != "payment":
+            rows.append(r)
+            continue
+        if any(_same_payment(p, r["payer_key"], r["amount"], r["date"]) for p in state["payments"]):
+            dupes += 1
+            rows.append({**r, "kind": "duplicate", "why": "already counted (same payer, amount and date ±3 days)"})
+            continue
+        p = {"id": new_id("E"), "date": r["date"], "payer": r["payer"], "payer_key": r["payer_key"],
+             "amount": r["amount"], "source": "email", "bank_confirmed": False}
+        cid, is_new = _client_id_for_new_payer(state, p)
+        new_clients += is_new
+        p["client_id"] = cid
+        state["payments"].append(p)
+        added += 1
+        rows.append({**r, "kind": "imported", "client": state["clients"][cid]["name"]})
+    state["payments"].sort(key=lambda p: (p["date"], p["id"]))
+    summary = {"kind": "email", "file": label, "emails_read": len(results), "new_payments": added,
+               "duplicates_skipped": dupes, "suspicious_blocked": sum(1 for r in results if r.get("kind") == "suspicious"),
+               "not_payments": sum(1 for r in results if r.get("kind") in ("not_a_payment", "unknown_format")),
+               "new_clients": new_clients, "imported_on": date.today().isoformat()}
+    state["imports"].append(summary)
+    return {"summary": summary, "rows": rows}
 
 
 def merge_clients(state: dict, into_id: str, from_id: str) -> None:

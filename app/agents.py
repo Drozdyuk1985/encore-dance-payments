@@ -209,6 +209,51 @@ def draft_reminders(state: dict, run_id: str, client_ids: list[str]) -> dict:
     return {"drafts": drafts, "usage": total, "calls": all_calls}
 
 
+# ------------------------------------------------------------------ Email Reader
+def read_zelle_emails(state: dict, run_id: str, mails: list[dict], use_ai: bool = True) -> dict:
+    """Code reads standard Zelle alerts; the Email Reader agent only sees the ones code could not read."""
+    from .bank import display_name, normalize_name
+    from .emails import classify
+
+    today = store.as_of(state)
+    results = [classify(m, today) for m in mails]
+    unknown = [i for i, r in enumerate(results) if r["kind"] == "unknown_format"]
+    usage, checks = None, []
+    if unknown and use_ai:
+        batch = "\n".join(f"Email {i}:\n{safety.wrap_untrusted(safety.EMAIL.sub('[email]', mails[i]['text'])[:3000])}"
+                          for i in unknown[:10])
+        try:
+            res = llm.run_agent(agent="email_reader", run_id=run_id, instructions=prompts.EMAIL_READER,
+                                user_input=batch, schema=prompts.EMAIL_READER_SCHEMA)
+            usage = res["usage"]
+            for item in res["output"]["emails"]:
+                i = item["index"]
+                if i not in unknown:
+                    continue
+                text = mails[i]["text"]
+                amount_seen = any(abs(float(a.replace(",", "")) - item["amount"]) < 0.01
+                                  for a in re.findall(r"\$\s?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)", text))
+                name_seen = item["payer_name"] and item["payer_name"].lower() in text.lower()
+                if item["suspicious"]:
+                    results[i].update(kind="suspicious", why=f"Email Reader: {item['reason']}")
+                elif item["is_payment_received"] and amount_seen and name_seen:
+                    results[i].update(kind="payment", payer=display_name(item["payer_name"]),
+                                      payer_key=normalize_name(item["payer_name"]), amount=round(item["amount"], 2),
+                                      why="read by the Email Reader agent; name and amount verified in the email text")
+                elif item["is_payment_received"]:
+                    results[i]["why"] = "Email Reader's answer rejected: name or amount not found word for word in the email"
+                    checks.append(results[i]["why"])
+                else:
+                    results[i].update(kind="not_a_payment", why=f"Email Reader: {item['reason']}")
+        except llm.ContentFiltered:
+            for i in unknown:
+                results[i].update(kind="suspicious", why="blocked by the model provider's safety filter")
+    out = store.import_email_payments(state, results)
+    out["usage"], out["code_checks"] = usage, checks
+    out["read_by_ai"] = len(unknown) if use_ai else 0
+    return out
+
+
 # ------------------------------------------------------------------ Reply handler
 DOLLARS = re.compile(r"\$\s?([\d,]+(?:\.\d{1,2})?)")
 

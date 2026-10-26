@@ -58,6 +58,7 @@ table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
   <div class="grid2">
     <ul class="small">
       <li>Students pay $160 privates and $70 group classes by <b>Zelle</b>, after class, when they remember</li>
+      <li>Today: Apple Notes "Running schedule" + a "To Do" line like <i>"Alex $160"</i>, updated by hand from Zelle emails</li>
       <li>The bank shows a name and an amount, with no link to the lesson. It's often a spouse, a parent or a company paying</li>
       <li>The "system" is the owner's memory at 11 pm, after teaching all day</li>
     </ul>
@@ -79,14 +80,14 @@ table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
     <div class="card"><b>Invoicing / Zelle requests</b><br><span class="muted tiny">Square, QuickBooks, Zelle request</span><br><br>An invoice per $70 class, or manual one-by-one requests.</div>
     <div class="card"><b>ChatGPT</b><br><span class="muted tiny">general chatbot</span><br><br>Writes nice texts, but doesn't know who owes, may invent amounts, and you'd paste your whole bank statement.</div>
   </div>
-  <div class="card hot small" style="margin-top:22px"><b class="pink">Encore</b> reads the Chase export as is, keeps <b>only incoming Zelle</b>, learns each payer's rhythm, computes balances in <b>code</b>, and lets AI do only judgment and language. Private by design: the AI sees IDs, not names.</div>
+  <div class="card hot small" style="margin-top:22px"><b class="pink">Encore</b> reads Zelle emails and the Chase export as is, keeps <b>only incoming Zelle</b>, learns each payer's rhythm, computes balances in <b>code</b>, and lets AI do only judgment and language. Private by design: the AI sees IDs, not names.</div>
 </section>
 
 <!-- 4 Agents -->
 <section>
-  <h2>Three agents, one <em>human checkpoint</em></h2>
+  <h2>Three agents (+ an email reader), one <em>human checkpoint</em></h2>
   <div class="diagram">{{svg:diagram}}</div>
-  <p class="tiny muted" style="margin-top:8px">Radar → Collector → code checks → owner taps Text. Reply handler uses read-only tools; no tool can mark anyone paid. All on gpt-6-luna.</p>
+  <p class="tiny muted" style="margin-top:8px">Zelle emails + bank CSV → Radar → Collector → code checks → owner taps Text. Reply handler uses read-only tools; no tool can mark anyone paid. All on gpt-6-luna.</p>
 </section>
 
 <!-- 5 Demo -->
@@ -110,6 +111,7 @@ table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
       <li><b>Injection:</b> code pre-screen (0 tokens) → untrusted wrapper → provider filter → <span class="pink">no "mark paid" tool</span></li>
       <li><b>Invented facts:</b> amounts only from code; typed $ in drafts are rejected</li>
       <li><b>Wrong action:</b> nothing sent without the owner; no threats; tone escalates slowly</li>
+      <li><b>Fake Zelle emails</b> blocked; a payment in an email and the bank counts once</li>
       <li><b>Privacy:</b> non-Zelle rows dropped; AI sees <code>C007</code>, not names</li>
       <li><b>Overspend:</b> 400k tokens/day, 6 tool steps, 20 calls/min</li>
     </ul>
@@ -158,7 +160,7 @@ table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
   <h2>Limits and <em>what's next</em></h2>
   <div class="grid2 small">
     <div class="card"><b>Doesn't work yet</b><ul class="small"><li>Radar guesses without a lesson log</li><li>Manual CSV import and lesson logging</li><li>No packages or credits; single user, local</li><li>No multi-week pilot yet</li></ul></div>
-    <div class="card hot"><b class="pink">Next month</b><ul class="small"><li>Calendar sync → lessons log themselves</li><li>Read Zelle emails → no CSV</li><li>Opt-in auto texts for friendly first reminders</li><li>4-week pilot with 2 more studios</li></ul></div>
+    <div class="card hot"><b class="pink">Next month</b><ul class="small"><li>Read the Notes "Running schedule" → lessons log themselves</li><li>Watch the Mail inbox → emails import themselves</li><li>Opt-in auto texts for friendly first reminders</li><li>4-week pilot with 2 more studios</li></ul></div>
   </div>
   <div class="center"><div class="repo">Repo (public): <a href="https://github.com/Drozdyuk1985/encore-dance-payments">github.com/Drozdyuk1985/encore-dance-payments</a> · run: <code>python run.py</code></div></div>
 </section>

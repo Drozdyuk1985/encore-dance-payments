@@ -1,0 +1,42 @@
+From: Chase <no.reply.alerts@chase.com>
+Subject: You received money with Zelle®
+Date: Sat, 24 Oct 2026 19:12:40 -0400
+
+PRIYA SHAH sent you $160.00
+Memo: private lesson oct 14
+The money is now in your account ending in (...0000).
+Thank you for using Zelle® with Chase.
+
+-----
+From: Chase <no.reply.alerts@chase.com>
+Subject: You received money with Zelle®
+Date: Sat, 24 Oct 2026 20:03:05 -0400
+
+TOM BECKER sent you $70.00
+Memo: group class
+The money is now in your account ending in (...0000).
+
+-----
+From: Chase <no.reply.alerts@chase.com>
+Subject: You received money with Zelle®
+Date: Tue, 20 Oct 2026 21:15:00 -0400
+
+MAYA ORLOVA sent you $160.00
+Memo: tuesday private
+
+-----
+From: Zelle Payments Team <alerts@zelle-secure-pay.net>
+Subject: Zelle® payment of $500.00 is PENDING
+
+A payment of $500.00 from LUCAS MOREAU is pending. To receive it you must upgrade to a business account.
+Click here to verify your account and accept the payment.
+
+-----
+From: Chase <no.reply.alerts@chase.com>
+Subject: Zelle® deposit notice
+Date: Sun, 25 Oct 2026 08:30:00 -0400
+
+Good morning! A Zelle® transfer has been deposited into your checking account (...0000).
+Sender: ELI ROSEN
+Deposited amount: $70.00
+Note: thursday group

@@ -134,6 +134,7 @@ td input,td select{padding:6px 8px;width:100%}
   <h2>Who still owes you?</h2>
   <p class="lead">Encore compares the lessons you logged with the Zelle payments in your bank export, and its Payment Radar spots regulars who have gone quiet. Pick who to remind, check the drafts, and send them from your own phone.</p>
   <div class="grid kpis" id="kpis"></div>
+  <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="muted small">Keep your Apple Notes "To Do" list in sync:</span><button class="btn ghost sm" id="copyNotes" title="Copies lines like 'Priya $320' for your Notes To Do list">Copy who owes for Notes</button></div>
 
   <div class="card" style="margin-top:16px">
     <div class="row space">
@@ -204,8 +205,19 @@ td input,td select{padding:6px 8px;width:100%}
 <!-- IMPORT -->
 <section id="tab-import" class="hide">
   <h2>Import your Zelle payments</h2>
-  <p class="lead">In Chase: open the business checking account → <b>Download account activity</b> → choose <b>CSV</b> and a date range. Drop the file here. Encore keeps only incoming Zelle payments (date, sender, amount). Every other row, like payroll, taxes, loans and card payments, is thrown away right away and never stored or shown to the AI.</p>
+  <p class="lead">Two ways in. <b>Zelle emails</b> are fastest: a payment counts the same evening. The <b>Chase CSV</b> is the full record. Use both. A payment seen in an email and later in the bank file is counted once.</p>
   <div class="card">
+    <h3>1 · Zelle emails</h3>
+    <p class="muted small" style="margin-top:0">In Mail, select your "You received money with Zelle" emails and drag them onto the file picker (they become .eml files), or copy and paste the email text below. Standard alerts are read by code; only unusual formats go to the Email Reader agent, and its answer counts only if the name and amount appear word for word in the email. Fake Zelle emails ("pending", "upgrade your account", odd sender) are flagged and never counted.</p>
+    <div class="row"><input type="file" id="emlFiles" accept=".eml,.txt,message/rfc822,text/plain" multiple>
+      <button class="btn ghost sm hide" id="sampleEmails">Load sample emails</button></div>
+    <textarea id="emlText" placeholder="…or paste one or more Zelle emails here" style="margin-top:10px"></textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" id="emailBtn">Read emails</button></div>
+    <div id="emailResult" style="margin-top:14px"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>2 · Chase CSV export</h3>
+    <p class="muted small" style="margin-top:0">In Chase: open the business checking account → <b>Download account activity</b> → choose <b>CSV</b> and a date range. Encore keeps only incoming Zelle payments (date, sender, amount). Every other row, like payroll, taxes, loans and card payments, is thrown away right away and never stored or shown to the AI.</p>
     <div class="row"><input type="file" id="csvFile" accept=".csv,.CSV,text/csv"><button class="btn" id="importBtn">Import</button></div>
     <div id="importResult" style="margin-top:14px"></div>
   </div>
@@ -450,9 +462,33 @@ function renderClients() {
 }
 
 function renderImports() {
-  $("#importHistory").innerHTML = S.imports.length ? S.imports.map(i => `<div style="padding:6px 0;border-top:1px solid var(--line)">${esc(i.file || "file")} · ${fmtDate(i.imported_on)} · ${i.rows_in_file} rows read · <b>${i.new_payments}</b> new Zelle payments · ${i.rows_dropped_not_zelle_income} non-Zelle rows discarded · ${i.new_clients} new clients</div>`).join("") : "No imports yet.";
+  $("#importHistory").innerHTML = S.imports.length ? S.imports.map(i => `<div style="padding:6px 0;border-top:1px solid var(--line)">${esc(i.file || "file")} · ${fmtDate(i.imported_on)} · ` + (i.kind === "email"
+    ? `${i.emails_read} emails read · <b>${i.new_payments}</b> new payments · ${i.duplicates_skipped} already counted · ${i.suspicious_blocked} suspicious blocked`
+    : `${i.rows_in_file} rows read · <b>${i.new_payments}</b> new Zelle payments${i.confirmed_email_payments ? ` · ${i.confirmed_email_payments} email payments confirmed` : ""} · ${i.rows_dropped_not_zelle_income} non-Zelle rows discarded`) + ` · ${i.new_clients} new clients</div>`).join("") : "No imports yet.";
   $("#resetSample").classList.toggle("hide", WS !== "sample");
+  $("#sampleEmails").classList.toggle("hide", WS !== "sample");
 }
+const EMAIL_KIND = {imported: ["on_track", "counted"], duplicate: ["one_time", "already counted"], suspicious: ["likely_stopped", "blocked: suspicious"],
+  not_a_payment: ["one_time", "not a payment"], unknown_format: ["maybe_forgot", "could not read"]};
+$("#sampleEmails").onclick = async () => { const r = await api("/api/sample_emails"); $("#emlText").value = r.text; toast("Sample emails loaded: press Read emails"); };
+$("#emailBtn").onclick = async () => {
+  const files = await Promise.all([...$("#emlFiles").files].map(async f => ({name: f.name, text: await f.text()})));
+  const pasted = $("#emlText").value;
+  if (!files.length && !pasted.trim()) return toast("Paste a Zelle email or choose .eml files", true);
+  const btn = $("#emailBtn"); busy(btn, true, "Reading emails…");
+  try {
+    const r = await api("/api/import_emails", {ws: WS, pasted, files});
+    S = r.state; render();
+    const s = r.summary;
+    $("#emailResult").innerHTML = `<div class="okbox" style="margin-bottom:10px">Read <b>${s.emails_read}</b> emails · <b>${s.new_payments}</b> new payments counted · ${s.duplicates_skipped} already counted · <b>${s.suspicious_blocked}</b> suspicious blocked${r.read_by_ai ? ` · ${r.read_by_ai} unusual email(s) read by the Email Reader agent` : ""}</div>
+      <div class="tablewrap"><table><thead><tr><th>Result</th><th>Payer</th><th>Amount</th><th>Date</th><th>Why</th></tr></thead><tbody>${r.rows.map(x => {
+        const [cls, label] = EMAIL_KIND[x.kind] || ["one_time", x.kind];
+        return `<tr><td><span class="chip s-${cls}">${label}</span></td><td>${esc(x.client || x.payer || "")}</td><td>${x.amount ? money(x.amount) : ""}</td><td>${fmtDate(x.date)}</td><td class="small muted">${esc(x.why || "")}</td></tr>`;
+      }).join("")}</tbody></table></div>${r.usage ? `<div class="usage" style="margin-top:8px">${usageLine(r.usage)}</div>` : ""}`;
+    $("#emlText").value = ""; $("#emlFiles").value = "";
+  } catch (e) { $("#emailResult").innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
+  busy(btn, false);
+};
 $("#importBtn").onclick = async () => {
   const f = $("#csvFile").files[0]; if (!f) return toast("Choose your Chase CSV first", true);
   const btn = $("#importBtn"); busy(btn, true, "Reading…");
@@ -464,6 +500,13 @@ $("#importBtn").onclick = async () => {
     $("#importResult").innerHTML = `<div class="okbox">Read <b>${s.rows_in_file}</b> rows. Kept <b>${s.zelle_payments_found}</b> incoming Zelle payments (${s.new_payments} new, ${s.duplicates_skipped} already imported). Discarded <b>${s.rows_dropped_not_zelle_income}</b> other rows. ${s.new_clients} new clients created.</div>`;
   } catch (e) { $("#importResult").innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
   busy(btn, false);
+};
+$("#copyNotes").onclick = async () => {
+  const owing = S.clients.filter(c => (c.ledger?.owed || 0) > 0).sort((a, b) => b.ledger.owed - a.ledger.owed);
+  if (!owing.length) return toast("Nobody owes anything for logged lessons");
+  const text = owing.map(c => `${c.name.split(" ")[0]} ${money(c.ledger.owed)}`).join("\n");
+  try { await navigator.clipboard.writeText(text); toast(`Copied ${owing.length} lines, e.g. "${text.split("\n")[0]}"`); }
+  catch { prompt("Copy this into your Notes To Do list:", text); }
 };
 $("#resetSample").onclick = async () => { if (!confirm("Reset the sample studio to its original demo data?")) return; S = await api("/api/reset", {ws: "sample"}); drafts = []; selected.clear(); render(); toast("Sample studio reset"); };
 

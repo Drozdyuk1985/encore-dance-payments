@@ -84,4 +84,17 @@ with sync_playwright() as p:
     phone.goto(BASE)
     phone.wait_for_selector("#radarSummary .summary")
     shot(phone, "13_phone")
+
+    # Zelle emails: payments that arrived after the last bank export, one duplicate, one scam, one odd format.
+    post("/api/reset", {"ws": "sample"})
+    page.goto(BASE)
+    page.click('#tabs button[data-tab="import"]')
+    page.click("#sampleEmails")
+    page.wait_for_function("document.querySelector('#emlText').value.length > 0")
+    page.click("#emailBtn")
+    page.wait_for_selector("#emailResult table", timeout=120_000)
+    page.evaluate("document.getElementById('toast').style.display = 'none'")
+    page.wait_for_timeout(400)
+    shot(page, "14_zelle_emails", el="#tab-import .card >> nth=0")
     browser.close()
+post("/api/reset", {"ws": "sample"})
