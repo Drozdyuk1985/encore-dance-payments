@@ -11,7 +11,7 @@ or a prepaid package. Prices change over time, so older amounts may not match to
 The owner teaches all day and forgets to chase payments. Your job is to help them get paid without
 annoying loyal students.
 
-Privacy rules: you only ever see client IDs like C007, never real names, phone numbers or bank details.
+Privacy rules: unless your role says otherwise, you only see client IDs like C007, never real names, phone numbers or bank details.
 Never ask for them and never invent them. Use the placeholder {{first_name}} wherever a name belongs.
 """
 

@@ -59,7 +59,8 @@ The app opens on the **Sample studio**: fictional students and a made-up Chase e
 Switch the header toggle to **My studio**, open **Import Zelle**, and add Zelle emails (Gmail: open the email → ⋮ → Download message, or paste the text; Apple Mail: drag them in) and/or upload a Chase CSV
 (Chase → account → *Download account activity* → CSV). **Copy who owes for Notes** (Tonight tab) gives lines like `Alex $160` for an Apple Notes to-do list. On **Log lessons → Paste from Apple Notes** you can paste a week (or more) of your schedule, e.g. `Tuesday 10/27` / `4pm Priya private` / `6pm group: Nina, Tom`, or your "who owes me" lines (`Alex $160`). Code reads them (no AI), shows a preview, and saves only what you confirm. Only incoming Zelle rows are kept. Your data is stored in
 `data/workspaces/real/`, which is git-ignored and never leaves your computer except as client IDs and payment
-statistics sent to the model (no names, no bank details).
+statistics sent to the model (no names, no bank details; the one exception is an unusual-format Zelle email,
+which the Email Reader has to read).
 
 
 ### Use it for your own studio
@@ -78,10 +79,10 @@ PRICE_GROUP=70
 
 ## Safety and cost controls
 
-- **Privacy:** the model sees `C007`-style IDs, never names, phones, emails or non-Zelle bank rows. Names are put back in on your computer.
+- **Privacy:** the model sees `C007`-style IDs, not names, phones, emails or non-Zelle bank rows (exception: the Email Reader reads the payer name in an unusual-format Zelle email). Names are put back in on your computer.
 - **Prompt injection:** a code pre-screen blocks obvious attacks at zero tokens; replies are wrapped as untrusted data; the course provider's filter is a third layer; and the Reply agent has no tool that changes balances.
 - **Invented facts:** amounts come only from code. Drafts may only use `{amount}`; reply drafts with dollar figures no tool returned are scrubbed.
-- **Runaway cost:** daily token budget (400k), 20 calls per minute, 6 tool steps per agent, 12k output tokens per call. All are in `app/config.py`.
+- **Runaway cost:** strict daily token cap (400k; each call must fit at its maximum size before it runs), 20 calls per minute, 6 tool steps per agent, 12k output tokens per call. All are in `app/config.py`.
 
 ## Tests and scripts
 

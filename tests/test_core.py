@@ -157,3 +157,15 @@ def test_owes_paste_and_future_lessons_not_charged():
     lessons = [{"client_id": "C1", "date": "2026-10-20", "kind": "private", "price": 160.0},
                {"client_id": "C1", "date": "2026-10-29", "kind": "private", "price": 160.0}]  # future
     assert balance(client, lessons, [], "2026-10-01", "2026-10-25")["owed"] == 160.0
+
+
+
+def test_daily_budget_is_a_strict_cap(monkeypatch):
+    from app import config, llm
+    import pytest
+    called = []
+    monkeypatch.setattr(llm, "tokens_used_today", lambda: config.DAILY_TOKEN_BUDGET - 5_000)  # 5k left, a call may need 12k+
+    monkeypatch.setattr(llm, "_client", lambda: called.append(1))
+    with pytest.raises(llm.BudgetExceeded):
+        llm.run_agent(agent="t", run_id="t", instructions="x", user_input="y", schema={"type": "object"})
+    assert called == []  # refused before any model call was made

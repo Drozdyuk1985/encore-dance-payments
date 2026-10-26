@@ -60,15 +60,22 @@ def tokens_used_today() -> int:
     return total
 
 
-def _check_budget() -> None:
+def estimate_call_tokens(*texts: str) -> int:
+    """Worst case for one call: input estimated generously (1 token per 3 characters) plus the full output limit."""
+    return sum(len(t) for t in texts) // 3 + config.MAX_OUTPUT_TOKENS
+
+
+def _check_budget(reserve: int) -> None:
+    """A strict cap: a call runs only if it fits in today's budget even at its maximum possible size."""
     now = time.time()
     while _recent_calls and now - _recent_calls[0] > 60:
         _recent_calls.popleft()
     if len(_recent_calls) >= config.MAX_CALLS_PER_MINUTE:
         raise BudgetExceeded(f"Rate limit: more than {config.MAX_CALLS_PER_MINUTE} model calls in a minute. Wait a moment.")
     used = tokens_used_today()
-    if used >= config.DAILY_TOKEN_BUDGET:
-        raise BudgetExceeded(f"Daily token budget reached ({used:,} of {config.DAILY_TOKEN_BUDGET:,}). Try again tomorrow.")
+    if used + reserve > config.DAILY_TOKEN_BUDGET:
+        raise BudgetExceeded(f"Daily token budget reached: {used:,} of {config.DAILY_TOKEN_BUDGET:,} used, and the next call "
+                             f"could need up to {reserve:,}. Try again tomorrow.")
     _recent_calls.append(now)
 
 
@@ -107,11 +114,13 @@ def run_agent(
     tool_impls: dict[str, Callable[..., dict]] | None = None,
 ) -> dict:
     """Run one agent to a JSON answer that matches `schema`. Returns {'output', 'usage', 'trace'}."""
-    client = _client()
+    client = None
     items: list = [{"role": "user", "content": user_input}]
     trace, usage_recs = [], []
+    fixed = instructions + json.dumps(schema) + json.dumps(tools or [])
     for step in range(config.MAX_TOOL_STEPS):
-        _check_budget()
+        _check_budget(estimate_call_tokens(fixed, user_input, *(str(i) for i in items[1:])))
+        client = client or _client()
         t0 = time.time()
         kwargs = dict(
             model=config.MODEL_NAME,
