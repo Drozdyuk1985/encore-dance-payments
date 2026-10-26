@@ -67,8 +67,9 @@ def _view(ws: str, state: dict) -> dict:
             "clients_total": len(clients),
         },
         "packages": sorted((p for c in clients for p in (c["ledger"] or {}).get("packages", [])),
-                           key=lambda p: (p["remaining"] == 0, p["date"]), reverse=False),
+                           key=lambda p: (p.get("remaining", 1) == 0 or bool(p.get("end")), p["date"])),
         "package_tiers": config.PACKAGE_TIERS,
+        "weekly_price": config.WEEKLY_UNLIMITED_PRICE,
         "prices": config.PRICES,
         "zelle_email": config.ZELLE_EMAIL,
         "studio": config.STUDIO_NAME,
@@ -190,6 +191,37 @@ def add_package(body: PackageBody):
         store.add_package(state, body.client_id, body.paid, body.date, body.already_used, body.price, body.settled)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    store.save(body.ws, state)
+    return _view(body.ws, state)
+
+
+class PlanBody(BaseModel):
+    ws: str
+    client_id: str
+    date: str
+    price: float | None = Field(default=None, ge=0)
+
+
+@app.post("/api/plans/add")
+def add_plan(body: PlanBody):
+    state = _ws(body.ws)
+    if body.client_id not in state["clients"]:
+        raise HTTPException(404, "no such client")
+    try:
+        date.fromisoformat(body.date)
+    except ValueError:
+        raise HTTPException(400, "date must be YYYY-MM-DD")
+    store.add_weekly_plan(state, body.client_id, body.date, body.price)
+    store.save(body.ws, state)
+    return _view(body.ws, state)
+
+
+@app.post("/api/plans/end")
+def end_plan(body: IdBody):
+    state = _ws(body.ws)
+    for p in state["packages"]:
+        if p["id"] == body.id and p.get("type") == "weekly":
+            p["end"] = store.as_of(state)
     store.save(body.ws, state)
     return _view(body.ws, state)
 

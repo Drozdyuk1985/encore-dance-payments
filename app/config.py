@@ -28,6 +28,8 @@ ZELLE_EMAIL = os.getenv("ZELLE_EMAIL", "info@dnadanceacademy.com")
 PRICES = {"private": float(os.getenv("PRICE_PRIVATE", "160")), "group": float(os.getenv("PRICE_GROUP", "70"))}
 # Prepaid private-lesson packages: lessons paid -> free lessons on top (10 paid = 11 lessons, ...).
 PACKAGE_TIERS = {10: 1, 20: 3, 30: 5, 40: 7, 50: 10}
+# Unlimited private lessons, paid every week (charged at the start of each plan week).
+WEEKLY_UNLIMITED_PRICE = float(os.getenv("PRICE_WEEKLY_UNLIMITED", "500"))
 
 # ---- Model (course key works with gpt-6-luna only)
 MODEL_NAME = "gpt-6-luna"

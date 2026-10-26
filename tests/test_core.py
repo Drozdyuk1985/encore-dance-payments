@@ -195,3 +195,20 @@ def test_radar_decides_package_holders_without_the_model(monkeypatch):
     r = agents.run_radar(s, "t")
     assert r["results"]["C1"]["status"] == "package_or_prepaid" and "2 of 11" in r["results"]["C1"]["reason"]
     assert r["sent_to_model"] == 0
+
+
+
+def test_unlimited_weekly_plan_charges_every_week_and_covers_privates():
+    from app.ledger import balance as bal
+    client = {"id": "C1", "rates": {}}
+    plan = {"id": "W1", "client_id": "C1", "type": "weekly", "date": "2026-10-05", "end": None, "price": 500.0}
+    lessons = [{"client_id": "C1", "date": d, "kind": "private", "price": 160.0}
+               for d in ("2026-10-06", "2026-10-08", "2026-10-13", "2026-10-21")]
+    payments = [{"date": "2026-10-05", "amount": 500.0}, {"date": "2026-10-12", "amount": 500.0}]
+    b = bal(client, lessons, payments, "2026-10-01", "2026-10-25", [plan])
+    # weeks of Oct 5, 12, 19 are charged ($1,500); two are paid; all four privates are covered by the plan
+    assert b["lessons_covered_by_package"] == 4 and b["owed"] == 500.0
+    assert [(l["kind"], l["date"]) for l in b["unpaid_lessons"]] == [("weekly_plan", "2026-10-19")]
+    ended = dict(plan, end="2026-10-11")  # ended after the first week: only one week charged, later privates charged
+    b2 = bal(client, lessons, payments, "2026-10-01", "2026-10-25", [ended])
+    assert b2["owed"] == 0.0 and b2["credit"] == 180.0  # $1,000 paid - $500 week - 2 privates at $160

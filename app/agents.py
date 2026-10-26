@@ -44,7 +44,14 @@ def run_radar(state: dict, run_id: str, prefilter: bool = True) -> dict:
             continue
         led = ledger_for(state, cid)
         owes = bool(led and led["owed"] > 0)
-        live = [p for p in (led or {}).get("packages", []) if p["remaining"] > 0]
+        plans = [p for p in (led or {}).get("packages", []) if p.get("type") == "weekly" and not p.get("end")]
+        if plans and not owes:  # unlimited weekly plan, every week paid: nothing to chase
+            skipped["package_holders"] += 1
+            code_results[cid] = {"client_id": cid, "status": "package_or_prepaid", "priority": 1, "suggest_reminder": False,
+                                 "decided_by": "code", "reason": f"Unlimited weekly plan (${plans[0]['price']:,.0f}/week): "
+                                                                 f"every week paid so far."}
+            continue
+        live = [p for p in (led or {}).get("packages", []) if p.get("type") != "weekly" and p["remaining"] > 0]
         if live and not owes:  # prepaid: silence is expected, so code decides (no tokens, no false "forgot")
             left, total = sum(p["remaining"] for p in live), sum(p["total_lessons"] for p in live)
             low = left <= 2
@@ -141,6 +148,9 @@ def _lesson_list(unpaid: list[dict]) -> str:
         parts.append("earlier balance")
     if any(l["kind"] == "package" for l in unpaid):
         parts.append("lesson package")
+    weeks = [day(l["date"]) for l in unpaid if l["kind"] == "weekly_plan"]
+    if weeks:
+        parts.append(f"unlimited plan for the week{'s' if len(weeks) > 1 else ''} of {join(weeks)}")
     return "your " + " and ".join(parts) if parts else "your recent lessons"
 
 
@@ -295,7 +305,9 @@ def handle_reply(state: dict, run_id: str, cid: str, text: str) -> dict:
         return {"owed": led["owed"], "unpaid_lessons": [{"date": l["date"], "kind": l["kind"], "price": l["price"]}
                                                        for l in led["unpaid_lessons"]], "credit": led["credit"],
                 "prepaid_packages": [{"bought": p["date"], "lessons": p["total_lessons"], "remaining": p["remaining"]}
-                                     for p in led["packages"]]}
+                                     for p in led["packages"] if p.get("type") != "weekly"],
+                "unlimited_weekly_plans": [{"since": p["date"], "price_per_week": p["price"], "ended": p.get("end")}
+                                           for p in led["packages"] if p.get("type") == "weekly"]}
 
     def recent_payments(days: int) -> dict:
         days = max(1, min(int(days), 120))

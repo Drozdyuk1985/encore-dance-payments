@@ -524,22 +524,36 @@ async function saveNotes() {
 function renderPackages() {
   const keep = $("#pClient").value; $("#pClient").innerHTML = clientOptions(keep);
   const tiers = S.package_tiers || {};
-  if (!$("#pTier").options.length) $("#pTier").innerHTML = Object.entries(tiers).map(([paid, free]) => `<option value="${paid}">${paid} paid + ${free} free = ${+paid + free} lessons</option>`).join("");
+  if (!$("#pTier").options.length) $("#pTier").innerHTML = Object.entries(tiers).map(([paid, free]) => `<option value="${paid}">${paid} paid + ${free} free = ${+paid + free} lessons</option>`).join("")
+    + `<option value="weekly">Unlimited privates: ${money(S.weekly_price)}/week</option>`;
+  const weekly = $("#pTier").value === "weekly";
+  $("#pUsed").disabled = $("#pSettled").disabled = weekly;
   if (!$("#pDate").value) $("#pDate").value = S.as_of;
   const c = byId($("#pClient").value), rate = c?.rates?.private || S.prices.private;
-  $("#pPrice").placeholder = money(+$("#pTier").value * rate).replace("$", "");
+  $("#pPrice").placeholder = (weekly ? money(S.weekly_price) : money(+$("#pTier").value * rate)).replace("$", "");
   $("#pList").innerHTML = S.packages.length ? `<div class="tablewrap"><table><thead><tr><th>Student</th><th>Package</th><th>Bought</th><th>Price</th><th>Lessons left</th><th></th></tr></thead><tbody>${S.packages.map(p => {
+    if (p.type === "weekly") {
+      const unpaid = (byId(p.client_id)?.ledger?.unpaid_lessons || []).filter(l => l.kind === "weekly_plan").length;
+      return `<tr><td>${esc(byId(p.client_id)?.name)}</td><td>Unlimited privates</td><td>${fmtDate(p.date)}${p.end ? " → " + fmtDate(p.end) : ""}</td><td>${money(p.price)}/week</td>
+        <td><span class="small ${unpaid ? "" : "muted"}" style="${unpaid ? "color:var(--warn)" : ""}">${p.weeks.length} week${p.weeks.length === 1 ? "" : "s"} · ${p.privates_covered} privates covered · ${unpaid ? unpaid + " week" + (unpaid > 1 ? "s" : "") + " unpaid" : "all weeks paid"}${p.end ? " · ended" : ""}</span></td>
+        <td>${p.end ? "" : `<button class="btn ghost sm" data-pend="${p.id}">End plan</button> `}<button class="btn ghost sm" data-pdel="${p.id}">Remove</button></td></tr>`;
+    }
     const pct = Math.round(100 * p.remaining / p.total_lessons), low = p.remaining > 0 && p.remaining <= 2;
     return `<tr><td>${esc(byId(p.client_id)?.name)}</td><td>${p.paid_lessons} + ${p.free_lessons} free</td><td>${fmtDate(p.date)}</td><td>${money(p.price)}${p.settled ? ' <span class="muted small">(paid before)</span>' : ""}</td>
       <td style="min-width:170px"><div class="meter"><div style="width:${pct}%"></div></div><span class="small ${low ? "" : "muted"}" style="${low ? "color:var(--warn)" : ""}">${p.remaining} of ${p.total_lessons} left${p.remaining === 0 ? " (used up)" : low ? ": offer a renewal" : ""}</span></td>
       <td><button class="btn ghost sm" data-pdel="${p.id}">Remove</button></td></tr>`;
   }).join("")}</tbody></table></div>` : `<div class="muted small">No packages yet.</div>`;
+  $$("[data-pend]").forEach(b => b.onclick = async () => { if (!confirm("End this plan today? No more weekly charges after this week.")) return; S = await api("/api/plans/end", {ws: WS, id: b.dataset.pend}); render(); });
   $$("[data-pdel]").forEach(b => b.onclick = async () => { if (!confirm("Remove this package?")) return; S = await api("/api/packages/delete", {ws: WS, id: b.dataset.pdel}); render(); });
 }
 $("#pClient").onchange = $("#pTier").onchange = () => renderPackages();
 $("#pAdd").onclick = async () => {
   const cid = $("#pClient").value; if (!cid) return toast("Pick a student", true);
   try {
+    if ($("#pTier").value === "weekly") {
+      S = await api("/api/plans/add", {ws: WS, client_id: cid, date: $("#pDate").value, price: $("#pPrice").value === "" ? null : +$("#pPrice").value});
+      $("#pPrice").value = ""; render(); return toast(`Unlimited weekly plan started for ${byId(cid).name}`);
+    }
     S = await api("/api/packages/add", {ws: WS, client_id: cid, paid: +$("#pTier").value, date: $("#pDate").value,
       already_used: +$("#pUsed").value || 0, price: $("#pPrice").value === "" ? null : +$("#pPrice").value, settled: $("#pSettled").checked});
     $("#pUsed").value = 0; $("#pPrice").value = ""; $("#pSettled").checked = false; render(); toast(`Package added for ${byId(cid).name}`);

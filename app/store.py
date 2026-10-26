@@ -294,3 +294,15 @@ def add_manual_payment(state: dict, client_id: str, amount: float, day: str, met
     state["payments"].append(p)
     state["payments"].sort(key=lambda x: (x["date"], x["id"]))
     return p
+
+
+def add_weekly_plan(state: dict, client_id: str, day: str, price: float | None = None) -> dict:
+    """Unlimited private lessons, charged every week from `day` until the plan is ended."""
+    from .config import WEEKLY_UNLIMITED_PRICE
+
+    plan = {"id": new_id("W"), "client_id": client_id, "type": "weekly", "date": day, "end": None,
+            "price": round(float(price if price is not None else WEEKLY_UNLIMITED_PRICE), 2)}
+    state.setdefault("packages", []).append(plan)
+    if not state["settings"].get("ledger_start"):
+        state["settings"]["ledger_start"] = day
+    return plan

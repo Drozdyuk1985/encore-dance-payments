@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from .config import PRICES
 
@@ -12,22 +12,42 @@ def lesson_price(client: dict, kind: str) -> float:
     return float(custom if custom is not None else PRICES[kind])
 
 
+def plan_weeks(plan: dict, as_of: str) -> list[str]:
+    """Start dates of every week of an unlimited weekly plan up to today (or the plan's end)."""
+    first, last = date.fromisoformat(plan["date"]), date.fromisoformat(min(as_of, plan.get("end") or as_of))
+    weeks, d = [], first
+    while d <= last:
+        weeks.append(d.isoformat())
+        d += timedelta(days=7)
+    return weeks
+
+
+def _in_plan(plan: dict, day: str) -> bool:
+    return plan["date"] <= day and (not plan.get("end") or day <= plan["end"])
+
+
 def package_usage(client: dict, lessons: list[dict], packages: list[dict], as_of: str) -> tuple[list[dict], set[int]]:
     """Private lessons on or after a package's purchase date come off that package (oldest package first).
 
     Returns (packages with used/remaining counts, python ids of the lessons the packages cover).
     """
-    mine = sorted((p for p in packages if p["client_id"] == client["id"]), key=lambda p: p["date"])
+    plans = [p for p in packages if p["client_id"] == client["id"] and p.get("type") == "weekly"]
+    mine = sorted((p for p in packages if p["client_id"] == client["id"] and p.get("type") != "weekly"), key=lambda p: p["date"])
     left = {p["id"]: p["total_lessons"] - p.get("already_used", 0) for p in mine}
     covered = set()
     privates = sorted((l for l in lessons if l["client_id"] == client["id"] and l["kind"] == "private" and l["date"] <= as_of),
                       key=lambda l: l["date"])
     for l in privates:
+        if any(_in_plan(p, l["date"]) for p in plans):  # unlimited weekly plan covers it; keep package lessons
+            covered.add(id(l))
+            continue
         pack = next((p for p in mine if p["date"] <= l["date"] and left[p["id"]] > 0), None)
         if pack:
             left[pack["id"]] -= 1
             covered.add(id(l))
     usage = [{**p, "remaining": max(left[p["id"]], 0), "used": p["total_lessons"] - max(left[p["id"]], 0)} for p in mine]
+    usage += [{**p, "weeks": plan_weeks(p, as_of),
+               "privates_covered": sum(1 for l in privates if _in_plan(p, l["date"]))} for p in plans]
     return usage, covered
 
 
@@ -41,7 +61,9 @@ def balance(client: dict, lessons: list[dict], payments: list[dict], start: str,
     # Lessons dated after today are scheduled, not owed yet; they start counting on their date.
     mine = [l for l in lessons if l["client_id"] == client["id"] and start <= l["date"] <= as_of and id(l) not in covered]
     mine += [{"date": p["date"], "kind": "package", "price": p["price"]} for p in usage
-             if start <= p["date"] <= as_of and not p.get("settled")]
+             if p.get("type") != "weekly" and start <= p["date"] <= as_of and not p.get("settled")]
+    mine += [{"date": w, "kind": "weekly_plan", "price": p["price"]} for p in usage if p.get("type") == "weekly"
+             for w in p["weeks"] if start <= w <= as_of]
     mine.sort(key=lambda l: l["date"])
     paid = sorted((p for p in payments if p["date"] >= start), key=lambda p: p["date"])
     charged = round(sum(l["price"] for l in mine), 2)
