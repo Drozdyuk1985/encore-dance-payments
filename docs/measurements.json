@@ -1,0 +1,357 @@
+{
+ "runs_per_mode": 3,
+ "modes": {
+  "prefilter_on": {
+   "runs": [
+    {
+     "input_tokens": 4337,
+     "cached_tokens": 2990,
+     "output_tokens": 1424,
+     "reasoning_tokens": 575,
+     "cost_usd": 0.000876,
+     "latency_ms": 11520,
+     "model_calls": 2,
+     "wall_seconds": 11.6,
+     "clients_sent_to_model": 10,
+     "reminders_suggested": [
+      "C001",
+      "C006",
+      "C008",
+      "C009",
+      "C010",
+      "C015"
+     ],
+     "drafts_failed_first_check": 0,
+     "drafts_fell_back_to_template": 0,
+     "statuses": {
+      "C002": "on_track",
+      "C005": "on_track",
+      "C007": "on_track",
+      "C014": "on_track",
+      "C001": "owes_balance",
+      "C008": "owes_balance",
+      "C009": "owes_balance",
+      "C015": "owes_balance",
+      "C003": "likely_stopped",
+      "C004": "likely_stopped",
+      "C006": "maybe_forgot",
+      "C012": "package_or_prepaid",
+      "C010": "maybe_forgot",
+      "C013": "one_time"
+     }
+    },
+    {
+     "input_tokens": 4343,
+     "cached_tokens": 2990,
+     "output_tokens": 1749,
+     "reasoning_tokens": 914,
+     "cost_usd": 0.00104,
+     "latency_ms": 13218,
+     "model_calls": 2,
+     "wall_seconds": 13.2,
+     "clients_sent_to_model": 10,
+     "reminders_suggested": [
+      "C001",
+      "C006",
+      "C008",
+      "C009",
+      "C010",
+      "C015"
+     ],
+     "drafts_failed_first_check": 0,
+     "drafts_fell_back_to_template": 0,
+     "statuses": {
+      "C002": "on_track",
+      "C005": "on_track",
+      "C007": "on_track",
+      "C014": "on_track",
+      "C001": "owes_balance",
+      "C008": "owes_balance",
+      "C009": "owes_balance",
+      "C015": "owes_balance",
+      "C003": "likely_stopped",
+      "C004": "likely_stopped",
+      "C006": "maybe_forgot",
+      "C012": "package_or_prepaid",
+      "C010": "maybe_forgot",
+      "C013": "one_time"
+     }
+    },
+    {
+     "input_tokens": 4339,
+     "cached_tokens": 2990,
+     "output_tokens": 1570,
+     "reasoning_tokens": 747,
+     "cost_usd": 0.00095,
+     "latency_ms": 10890,
+     "model_calls": 2,
+     "wall_seconds": 10.9,
+     "clients_sent_to_model": 10,
+     "reminders_suggested": [
+      "C001",
+      "C006",
+      "C008",
+      "C009",
+      "C010",
+      "C015"
+     ],
+     "drafts_failed_first_check": 0,
+     "drafts_fell_back_to_template": 0,
+     "statuses": {
+      "C002": "on_track",
+      "C005": "on_track",
+      "C007": "on_track",
+      "C014": "on_track",
+      "C001": "owes_balance",
+      "C008": "owes_balance",
+      "C009": "owes_balance",
+      "C015": "owes_balance",
+      "C003": "likely_stopped",
+      "C004": "likely_stopped",
+      "C006": "maybe_forgot",
+      "C012": "package_or_prepaid",
+      "C010": "maybe_forgot",
+      "C013": "one_time"
+     }
+    }
+   ],
+   "mean": {
+    "input_tokens": 4339.666667,
+    "cached_tokens": 2990,
+    "output_tokens": 1581,
+    "reasoning_tokens": 745.333333,
+    "cost_usd": 0.000955,
+    "latency_ms": 11876,
+    "model_calls": 2,
+    "wall_seconds": 11.9
+   }
+  },
+  "prefilter_off": {
+   "runs": [
+    {
+     "input_tokens": 5184,
+     "cached_tokens": 3834,
+     "output_tokens": 1736,
+     "reasoning_tokens": 745,
+     "cost_usd": 0.001042,
+     "latency_ms": 11361,
+     "model_calls": 2,
+     "wall_seconds": 11.4,
+     "clients_sent_to_model": 14,
+     "reminders_suggested": [
+      "C001",
+      "C006",
+      "C008",
+      "C009",
+      "C010",
+      "C015"
+     ],
+     "drafts_failed_first_check": 0,
+     "drafts_fell_back_to_template": 0,
+     "statuses": {
+      "C001": "owes_balance",
+      "C008": "owes_balance",
+      "C009": "owes_balance",
+      "C015": "owes_balance",
+      "C003": "likely_stopped",
+      "C004": "likely_stopped",
+      "C006": "maybe_forgot",
+      "C012": "package_or_prepaid",
+      "C010": "maybe_forgot",
+      "C005": "on_track",
+      "C002": "on_track",
+      "C007": "on_track",
+      "C014": "on_track",
+      "C013": "one_time"
+     }
+    },
+    {
+     "input_tokens": 5185,
+     "cached_tokens": 3834,
+     "output_tokens": 1790,
+     "reasoning_tokens": 809,
+     "cost_usd": 0.001068,
+     "latency_ms": 23031,
+     "model_calls": 2,
+     "wall_seconds": 23.0,
+     "clients_sent_to_model": 14,
+     "reminders_suggested": [
+      "C001",
+      "C006",
+      "C008",
+      "C009",
+      "C010",
+      "C015"
+     ],
+     "drafts_failed_first_check": 0,
+     "drafts_fell_back_to_template": 0,
+     "statuses": {
+      "C001": "owes_balance",
+      "C008": "owes_balance",
+      "C009": "owes_balance",
+      "C015": "owes_balance",
+      "C003": "likely_stopped",
+      "C004": "likely_stopped",
+      "C006": "maybe_forgot",
+      "C012": "package_or_prepaid",
+      "C010": "maybe_forgot",
+      "C005": "on_track",
+      "C002": "on_track",
+      "C007": "on_track",
+      "C014": "on_track",
+      "C013": "one_time"
+     }
+    },
+    {
+     "input_tokens": 5179,
+     "cached_tokens": 3834,
+     "output_tokens": 1976,
+     "reasoning_tokens": 755,
+     "cost_usd": 0.0011610000000000001,
+     "latency_ms": 14293,
+     "model_calls": 2,
+     "wall_seconds": 14.3,
+     "clients_sent_to_model": 14,
+     "reminders_suggested": [
+      "C001",
+      "C006",
+      "C008",
+      "C009",
+      "C010",
+      "C015"
+     ],
+     "drafts_failed_first_check": 0,
+     "drafts_fell_back_to_template": 0,
+     "statuses": {
+      "C001": "owes_balance",
+      "C008": "owes_balance",
+      "C009": "owes_balance",
+      "C015": "owes_balance",
+      "C003": "likely_stopped",
+      "C004": "likely_stopped",
+      "C006": "maybe_forgot",
+      "C012": "package_or_prepaid",
+      "C010": "maybe_forgot",
+      "C005": "on_track",
+      "C002": "on_track",
+      "C007": "on_track",
+      "C014": "on_track",
+      "C013": "one_time"
+     }
+    }
+   ],
+   "mean": {
+    "input_tokens": 5182.666667,
+    "cached_tokens": 3834,
+    "output_tokens": 1834,
+    "reasoning_tokens": 769.666667,
+    "cost_usd": 0.00109,
+    "latency_ms": 16228.333333,
+    "model_calls": 2,
+    "wall_seconds": 16.233333
+   }
+  }
+ },
+ "replies": [
+  {
+   "client": "C001",
+   "intent": "claims_paid",
+   "usage": {
+    "input_tokens": 4867,
+    "cached_tokens": 2428,
+    "output_tokens": 439,
+    "reasoning_tokens": 191,
+    "cost_usd": 0.000487,
+    "latency_ms": 8439,
+    "model_calls": 4
+   },
+   "tools": [
+    "get_balance",
+    "recent_payments",
+    "find_payments_by_amount",
+    "flag_for_owner"
+   ],
+   "blocked_by": null
+  },
+  {
+   "client": "C009",
+   "intent": "promise_to_pay",
+   "usage": {
+    "input_tokens": 3200,
+    "cached_tokens": 2102,
+    "output_tokens": 263,
+    "reasoning_tokens": 109,
+    "cost_usd": 0.000262,
+    "latency_ms": 8040,
+    "model_calls": 3
+   },
+   "tools": [
+    "get_balance",
+    "record_promise"
+   ],
+   "blocked_by": null
+  },
+  {
+   "client": "C015",
+   "intent": "suspicious",
+   "usage": null,
+   "tools": [],
+   "blocked_by": "by the code pre-screen before reaching the AI"
+  }
+ ],
+ "prefilter_quality": {
+  "same_reminder_list_every_run": true,
+  "reminders_on": [
+   [
+    "C001",
+    "C006",
+    "C008",
+    "C009",
+    "C010",
+    "C015"
+   ],
+   [
+    "C001",
+    "C006",
+    "C008",
+    "C009",
+    "C010",
+    "C015"
+   ],
+   [
+    "C001",
+    "C006",
+    "C008",
+    "C009",
+    "C010",
+    "C015"
+   ]
+  ],
+  "reminders_off": [
+   [
+    "C001",
+    "C006",
+    "C008",
+    "C009",
+    "C010",
+    "C015"
+   ],
+   [
+    "C001",
+    "C006",
+    "C008",
+    "C009",
+    "C010",
+    "C015"
+   ],
+   [
+    "C001",
+    "C006",
+    "C008",
+    "C009",
+    "C010",
+    "C015"
+   ]
+  ]
+ }
+}

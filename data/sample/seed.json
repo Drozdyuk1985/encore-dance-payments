@@ -1,0 +1,160 @@
+{
+ "settings": {
+  "as_of": "2026-10-25",
+  "ledger_start": "2026-10-12"
+ },
+ "merges": {
+  "RUTH KLEIN": "MARK KLEIN"
+ },
+ "client_details": {
+  "MAYA ORLOVA": {
+   "name": "Maya Orlova",
+   "phone": "555-0101",
+   "language": "English"
+  },
+  "TOM BECKER": {
+   "name": "Tom Becker",
+   "phone": "555-0102",
+   "language": "English"
+  },
+  "PRIYA SHAH": {
+   "name": "Priya Shah",
+   "phone": "555-0103",
+   "language": "English"
+  },
+  "LUCAS MOREAU": {
+   "name": "Lucas Moreau",
+   "phone": "555-0104",
+   "language": "English"
+  },
+  "NINA PETROVA": {
+   "name": "Nina Petrova",
+   "phone": "555-0105",
+   "language": "Russian"
+  },
+  "OWEN PARK": {
+   "name": "Owen Park",
+   "phone": "555-0106",
+   "language": "English"
+  },
+  "MARK KLEIN": {
+   "name": "Leo Klein",
+   "phone": "555-0107",
+   "language": "English",
+   "notes": "Leo is 12. Parents Mark and Ruth take turns paying."
+  },
+  "BLUE HERON LLC": {
+   "name": "Jamie Ortiz",
+   "phone": "555-0108",
+   "language": "English",
+   "notes": "Employer Blue Heron LLC pays monthly."
+  },
+  "SARA LINDQVIST": {
+   "name": "Sara Lindqvist",
+   "phone": "555-0109",
+   "language": "English"
+  },
+  "ELI ROSEN": {
+   "name": "Eli Rosen",
+   "phone": "555-0110",
+   "language": "English"
+  },
+  "ANYA KOVAL": {
+   "name": "Anya Koval",
+   "phone": "555-0111",
+   "language": "Ukrainian"
+  },
+  "ELENA VOLKOV": {
+   "name": "Elena Volkov",
+   "phone": "555-0112",
+   "language": "Russian"
+  },
+  "IGOR VOLKOV": {
+   "name": "Igor Volkov",
+   "phone": "555-0113",
+   "language": "Russian"
+  },
+  "DAVID CHEN": {
+   "name": "David Chen",
+   "phone": "555-0114",
+   "language": "English"
+  }
+ },
+ "lessons": [
+  {
+   "payer": "MAYA ORLOVA",
+   "date": "2026-10-13",
+   "kind": "private"
+  },
+  {
+   "payer": "MAYA ORLOVA",
+   "date": "2026-10-20",
+   "kind": "private"
+  },
+  {
+   "payer": "TOM BECKER",
+   "date": "2026-10-15",
+   "kind": "group"
+  },
+  {
+   "payer": "PRIYA SHAH",
+   "date": "2026-10-14",
+   "kind": "private"
+  },
+  {
+   "payer": "PRIYA SHAH",
+   "date": "2026-10-21",
+   "kind": "private"
+  },
+  {
+   "payer": "NINA PETROVA",
+   "date": "2026-10-12",
+   "kind": "group"
+  },
+  {
+   "payer": "NINA PETROVA",
+   "date": "2026-10-12",
+   "kind": "group"
+  },
+  {
+   "payer": "NINA PETROVA",
+   "date": "2026-10-19",
+   "kind": "group"
+  },
+  {
+   "payer": "NINA PETROVA",
+   "date": "2026-10-19",
+   "kind": "group"
+  },
+  {
+   "payer": "MARK KLEIN",
+   "date": "2026-10-14",
+   "kind": "private"
+  },
+  {
+   "payer": "MARK KLEIN",
+   "date": "2026-10-21",
+   "kind": "private"
+  },
+  {
+   "payer": "ELI ROSEN",
+   "date": "2026-10-20",
+   "kind": "group"
+  },
+  {
+   "payer": "ELI ROSEN",
+   "date": "2026-10-22",
+   "kind": "group"
+  },
+  {
+   "payer": "IGOR VOLKOV",
+   "date": "2026-10-15",
+   "kind": "group"
+  },
+  {
+   "payer": "IGOR VOLKOV",
+   "date": "2026-10-22",
+   "kind": "group"
+  }
+ ]
+}

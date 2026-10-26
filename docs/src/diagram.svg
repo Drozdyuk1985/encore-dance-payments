@@ -1,0 +1,75 @@
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="Inter, Arial, sans-serif" role="img" aria-label="Encore architecture: code steps, three agents, checks and the owner">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <marker id="arp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff2d95"/></marker>
+  </defs>
+  <style>
+    .code{fill:#f4f1f3;stroke:#2b2b2b;stroke-width:1.4}
+    .agent{fill:#111;stroke:#ff2d95;stroke-width:2.4}
+    .human{fill:#ffe1ef;stroke:#ff2d95;stroke-width:1.4}
+    .t{font-size:15px;font-weight:700;fill:#111}
+    .ta{font-size:15px;font-weight:800;fill:#ff2d95}
+    .s{font-size:12px;fill:#444}
+    .sa{font-size:12px;fill:#f2e6ec}
+    .dl{font-size:11px;fill:#666;font-style:italic}
+    .ln{stroke:#555;stroke-width:1.6;fill:none;marker-end:url(#ar)}
+    .lp{stroke:#ff2d95;stroke-width:1.8;fill:none;marker-end:url(#arp)}
+  </style>
+  <text x="20" y="26" font-size="13" fill="#666">Grey = plain code (no AI)   ·   Black/pink = AI agent (gpt-6-luna)   ·   Pink fill = the owner</text>
+
+  <!-- Row 1: data in -->
+  <rect class="code" x="20" y="50" width="200" height="72" rx="10"/>
+  <text class="t" x="34" y="78">Chase CSV export</text><text class="s" x="34" y="98">keeps incoming Zelle only;</text><text class="s" x="34" y="113">drops payroll, taxes, loans</text>
+  <rect class="human" x="20" y="150" width="200" height="60" rx="10"/>
+  <text class="t" x="34" y="176">Owner logs lessons</text><text class="s" x="34" y="195">5 seconds after class</text>
+
+  <rect class="code" x="270" y="50" width="210" height="72" rx="10"/>
+  <text class="t" x="284" y="78">Rhythm statistics</text><text class="s" x="284" y="98">gap between payments, days</text><text class="s" x="284" y="113">silent, usual amount</text>
+  <rect class="code" x="270" y="150" width="210" height="60" rx="10"/>
+  <text class="t" x="284" y="176">Ledger</text><text class="s" x="284" y="195">exact $ owed, oldest lesson first</text>
+  <path class="ln" d="M220,86 H270"/><path class="ln" d="M220,180 H270"/><path class="ln" d="M220,98 C245,110 245,170 270,176"/>
+
+  <rect class="code" x="530" y="96" width="190" height="70" rx="10"/>
+  <text class="t" x="544" y="122">Privacy + pre-filter</text><text class="s" x="544" y="141">names → IDs (C007); on-time</text><text class="s" x="544" y="156">and inactive decided by code</text>
+  <path class="ln" d="M480,86 C505,86 505,120 530,124"/><path class="ln" d="M480,180 C505,180 505,145 530,140"/>
+
+  <!-- Radar -->
+  <rect class="agent" x="770" y="86" width="170" height="92" rx="12"/>
+  <text class="ta" x="786" y="114">1 · Payment Radar</text><text class="sa" x="786" y="135">forgot / stopped /</text><text class="sa" x="786" y="150">prepaid / owes</text><text class="sa" x="786" y="165">→ who to nudge</text>
+  <path class="lp" d="M720,131 H770"/>
+
+  <!-- Collector -->
+  <rect class="agent" x="770" y="250" width="170" height="92" rx="12"/>
+  <text class="ta" x="786" y="278">2 · Collector</text><text class="sa" x="786" y="299">drafts reminders in each</text><text class="sa" x="786" y="314">client's language, using</text><text class="sa" x="786" y="329">{amount} placeholders</text>
+  <path class="lp" d="M855,178 V250"/><text class="dl" x="846" y="220" text-anchor="end">hand-off: chosen IDs</text>
+
+  <rect class="code" x="530" y="250" width="190" height="92" rx="10"/>
+  <text class="t" x="544" y="276">Draft checks (code)</text><text class="s" x="544" y="296">must use {amount}, {zelle_email}</text><text class="s" x="544" y="311">no typed $, no threats, length</text><text class="s" x="544" y="326">fail → 1 retry → template</text>
+  <path class="ln" d="M770,296 H720"/>
+
+  <rect class="human" x="270" y="250" width="210" height="92" rx="10"/>
+  <text class="t" x="284" y="276">Owner approves</text><text class="s" x="284" y="296">edits, then taps Text or Email</text><text class="s" x="284" y="311">(opens their own phone)</text><text class="s" x="284" y="326">nothing is sent automatically</text>
+  <path class="ln" d="M530,296 H480"/>
+  <rect class="code" x="20" y="262" width="200" height="68" rx="10"/>
+  <text class="t" x="34" y="290">Student</text><text class="s" x="34" y="310">gets a text, writes back</text>
+  <path class="ln" d="M270,296 H220"/>
+
+  <!-- Reply path -->
+  <rect class="code" x="20" y="400" width="200" height="80" rx="10"/>
+  <text class="t" x="34" y="426">Injection pre-screen</text><text class="s" x="34" y="446">obvious attacks blocked here</text><text class="s" x="34" y="461">(0 tokens); names masked</text>
+  <path class="ln" d="M120,330 V400"/><text class="dl" x="128" y="372">owner pastes reply</text>
+
+  <rect class="agent" x="270" y="396" width="210" height="88" rx="12"/>
+  <text class="ta" x="286" y="424">3 · Reply handler</text><text class="sa" x="286" y="445">verifies "I paid" with tools,</text><text class="sa" x="286" y="460">records promises, flags the rest</text>
+  <path class="lp" d="M220,440 H270"/>
+
+  <rect class="code" x="530" y="380" width="410" height="120" rx="10"/>
+  <text class="t" x="544" y="406">Read-only tools + two safe writes</text>
+  <text class="s" x="544" y="428">get_balance · recent_payments · find_payments_by_amount (no names)</text>
+  <text class="s" x="544" y="448">record_promise (date must be within 60 days) · flag_for_owner</text>
+  <text class="s" x="544" y="472" font-weight="700" fill="#c4006a">No tool can mark anyone as paid or change a balance.</text>
+  <text class="s" x="544" y="490">$ figures in the suggested reply must come from a tool result.</text>
+  <path class="lp" d="M480,432 H530"/><path class="lp" d="M530,452 H480"/>
+
+  <text x="20" y="540" font-size="12" fill="#666">Budgets on every call: 400k tokens/day · 20 calls/min · 6 tool steps per agent · 12k output tokens per response. Every call logged with real token counts.</text>
+</svg>

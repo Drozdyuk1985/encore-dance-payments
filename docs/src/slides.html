@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encore: Slides</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/black.min.css">
+<style>
+:root{--pink:#ff2d95;--blush:#ffc2dc;--r-background-color:#070707;--r-main-font:Inter,-apple-system,"Segoe UI",Arial,sans-serif;--r-heading-font:Inter,-apple-system,"Segoe UI",Arial,sans-serif;--r-main-color:#f6eef2;--r-link-color:#ff6bb5}
+.reveal{font-size:30px}
+.reveal h1,.reveal h2{text-transform:none;font-weight:800;letter-spacing:-.5px}
+.reveal h1{font-size:2.6em;letter-spacing:4px}
+.reveal h2{font-size:1.5em;margin-bottom:.5em}
+.reveal h2 em{color:var(--pink);font-style:normal}
+.pink{color:var(--pink)}
+.muted{color:#b9a7b1}
+.small{font-size:.62em}
+.tiny{font-size:.48em}
+.reveal section{text-align:left}
+.reveal .center{text-align:center}
+.reveal ul{display:block;margin-left:1em}
+.reveal li{margin:.35em 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:#141015;border:1px solid #33242d;border-radius:18px;padding:18px 20px}
+.card.hot{border-color:var(--pink);box-shadow:0 0 30px rgba(255,45,149,.25)}
+.big{font-size:2.1em;font-weight:800;color:var(--pink);line-height:1.05}
+.kp .big{font-size:1.45em;white-space:nowrap}
+.lab{font-size:.55em;color:#cdb9c4;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+.reveal img.shot{border-radius:14px;border:1px solid #33242d;margin:0;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.diagram{background:#fff;border-radius:16px;padding:10px}
+.diagram svg{width:100%;height:auto;max-height:570px;display:block}
+.repo{display:inline-block;margin-top:24px;background:#141015;border:1px solid var(--pink);border-radius:12px;padding:10px 16px;font-size:.6em}
+.bar{height:6px;width:120px;background:var(--pink);border-radius:9px;margin:18px 0}
+table.t{font-size:.55em;width:100%;border-collapse:collapse}
+table.t td,table.t th{border-bottom:1px solid #33242d;padding:6px 8px}
+table.t th{color:var(--pink);text-align:left}
+table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- 1 Title -->
+<section>
+  <div class="tiny pink" style="letter-spacing:3px;font-weight:800">MGT 409 · FINAL PROJECT</div>
+  <h1>EN<span class="pink">CORE</span></h1>
+  <div class="bar"></div>
+  <p style="font-size:1.05em;max-width:900px">An AI payment desk that finds the lesson payments students <span class="pink">forgot to send</span>, and drafts the reminder the owner keeps forgetting to write.</p>
+  <p class="small muted">Denys Drozdyuk · built and tested at DNA Dance Academy</p>
+  <div class="repo">Repo (public): <a href="https://github.com/Drozdyuk1985/encore-dance-payments">github.com/Drozdyuk1985/encore-dance-payments</a></div>
+</section>
+
+<!-- 2 Problem -->
+<section>
+  <h2>The problem: Zelle money with <em>no memory</em></h2>
+  <div class="grid2">
+    <ul class="small">
+      <li>Students pay $160 privates and $70 group classes by <b>Zelle</b>, after class, when they remember</li>
+      <li>The bank shows a name and an amount, with no link to the lesson. It's often a spouse, a parent or a company paying</li>
+      <li>The "system" is the owner's memory at 11 pm, after teaching all day</li>
+    </ul>
+    <div class="grid2 kp" style="gap:14px">
+      <div class="card hot"><div class="big">2+ h</div><div class="lab">a week chasing</div></div>
+      <div class="card"><div class="big">5+</div><div class="lab">payments slip a month</div></div>
+      <div class="card"><div class="big">$350–800</div><div class="lab">a month at risk*</div></div>
+      <div class="card"><div class="big">100+ h</div><div class="lab">owner time a year</div></div>
+    </div>
+  </div>
+  <p class="tiny muted">*Owner estimate: 5+ slips × list prices. Source: me, the studio owner (the real user).</p>
+</section>
+
+<!-- 3 What's new -->
+<section>
+  <h2>What's <em>new</em></h2>
+  <div class="grid3 small">
+    <div class="card"><b>Studio software</b><br><span class="muted tiny">Jackrabbit, Mindbody, Akada, Pike13</span><br><br>Great reminders, but only if every payment moves onto their system.</div>
+    <div class="card"><b>Invoicing / Zelle requests</b><br><span class="muted tiny">Square, QuickBooks, Zelle request</span><br><br>An invoice per $70 class, or manual one-by-one requests.</div>
+    <div class="card"><b>ChatGPT</b><br><span class="muted tiny">general chatbot</span><br><br>Writes nice texts, but doesn't know who owes, may invent amounts, and you'd paste your whole bank statement.</div>
+  </div>
+  <div class="card hot small" style="margin-top:22px"><b class="pink">Encore</b> reads the Chase export as is, keeps <b>only incoming Zelle</b>, learns each payer's rhythm, computes balances in <b>code</b>, and lets AI do only judgment and language. Private by design: the AI sees IDs, not names.</div>
+</section>
+
+<!-- 4 Agents -->
+<section>
+  <h2>Three agents, one <em>human checkpoint</em></h2>
+  <div class="diagram">{{svg:diagram}}</div>
+  <p class="tiny muted" style="margin-top:8px">Radar → Collector → code checks → owner taps Text. Reply handler uses read-only tools; no tool can mark anyone paid. All on gpt-6-luna.</p>
+</section>
+
+<!-- 5 Demo -->
+<section>
+  <h2>Demo: <em>who owes</em>, then ready-to-send texts</h2>
+  <div class="grid2">
+    <img class="shot" src="{{img:02_radar}}" alt="Payment Radar">
+    <img class="shot" src="{{img:03_drafts}}" alt="Drafts">
+  </div>
+  <p class="tiny muted">Sample studio (fictional data). The Radar catches the weekly payer silent for 27 days; the Collector writes 6 texts (one in Ukrainian), and all 6 passed the code checks.</p>
+</section>
+
+<!-- 6 Reply + safety -->
+<section>
+  <h2>Safety: it <em>checks</em>, and can't be talked into paying you</h2>
+  <div class="grid2">
+    <div>
+      <img class="shot" src="{{img:06_reply_attack_blocked}}" alt="Attack blocked">
+    </div>
+    <ul class="small">
+      <li><b>Injection:</b> code pre-screen (0 tokens) → untrusted wrapper → provider filter → <span class="pink">no "mark paid" tool</span></li>
+      <li><b>Invented facts:</b> amounts only from code; typed $ in drafts are rejected</li>
+      <li><b>Wrong action:</b> nothing sent without the owner; no threats; tone escalates slowly</li>
+      <li><b>Privacy:</b> non-Zelle rows dropped; AI sees <code>C007</code>, not names</li>
+      <li><b>Overspend:</b> 400k tokens/day, 6 tool steps, 20 calls/min</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 7 Cost -->
+<section>
+  <h2>Cost: about <em>a dime a month</em></h2>
+  <table class="t">
+    <tr><th>Measured (real API token counts)</th><th>Input</th><th>Cached</th><th>Output</th><th>Cost</th></tr>
+    <tr><td>Nightly Radar + Collector (sample, mean of 3)</td><td class="n">4,340</td><td class="n">2,990</td><td class="n">1,581</td><td class="n">$0.00096</td></tr>
+    <tr><td>Reply "I already paid" (4 tool rounds)</td><td class="n">4,867</td><td class="n">2,428</td><td class="n">439</td><td class="n">$0.00049</td></tr>
+    <tr><td>Real studio Radar, full history (anonymized)</td><td class="n">7,686</td><td class="n">1,127</td><td class="n">4,308</td><td class="n">$0.0028</td></tr>
+  </table>
+  <div class="grid3" style="margin-top:20px">
+    <div class="card hot"><div class="big">$0.11</div><div class="lab">per studio / month</div></div>
+    <div class="card"><div class="big">$11</div><div class="lab">100 studios / month</div></div>
+    <div class="card"><div class="big">$1,100</div><div class="lab">10,000 studios / month</div></div>
+  </div>
+  <p class="tiny muted">The pre-filter cut cost by 12% and time by 27% with the same reminder list in 6 of 6 runs. Found and bypassed Portkey's response cache to measure honestly. Prices: Lecture 11.</p>
+</section>
+
+<!-- 8 Impact -->
+<section>
+  <h2>Impact: tested on my <em>real</em> studio</h2>
+  <div class="grid2">
+    <ul class="small">
+      <li>Real Chase export imported as is; only Zelle kept, on my computer only</li>
+      <li>Radar sorted the full history in <b>one call, $0.0028</b></li>
+      <li><b>Honest miss:</b> 3 "maybe forgot" flags, and all 3 had actually <span class="pink">stopped coming</span> (0/3)</li>
+      <li>Lesson: silence ≠ debt. The <b>ledger</b> makes "owes" a fact, and the human check makes a wrong guess harmless</li>
+      <li>Shipped the fix: one-tap <b>"Stopped coming"</b></li>
+    </ul>
+    <div class="grid2 kp" style="gap:14px">
+      <div class="card hot"><div class="big">2h → 15m</div><div class="lab">weekly time (est.)</div></div>
+      <div class="card"><div class="big">$175–400</div><div class="lab">recovered / mo (est.)</div></div>
+      <div class="card"><div class="big">12–25 s</div><div class="lab">nightly AI run</div></div>
+      <div class="card"><div class="big">0 / 36</div><div class="lab">drafts failed checks</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Next -->
+<section>
+  <h2>Limits and <em>what's next</em></h2>
+  <div class="grid2 small">
+    <div class="card"><b>Doesn't work yet</b><ul class="small"><li>Radar guesses without a lesson log</li><li>Manual CSV import and lesson logging</li><li>No packages or credits; single user, local</li><li>No multi-week pilot yet</li></ul></div>
+    <div class="card hot"><b class="pink">Next month</b><ul class="small"><li>Calendar sync → lessons log themselves</li><li>Read Zelle emails → no CSV</li><li>Opt-in auto texts for friendly first reminders</li><li>4-week pilot with 2 more studios</li></ul></div>
+  </div>
+  <div class="center"><div class="repo">Repo (public): <a href="https://github.com/Drozdyuk1985/encore-dance-payments">github.com/Drozdyuk1985/encore-dance-payments</a> · run: <code>python run.py</code></div></div>
+</section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script>Reveal.initialize({hash: true, width: 1280, height: 760, margin: 0.06, transition: "slide"});</script>
+</body>
+</html>

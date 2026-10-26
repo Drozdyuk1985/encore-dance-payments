@@ -1,0 +1,29 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Real business data never leaves this computer
+data/real/
+data/workspaces/real/
+*_Activity_*
+!data/sample/
+
+# Runtime output
+logs/*.jsonl
+data/workspaces/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# OS
+.DS_Store
+
+logs/*.out
+
+# Personal files that may land in this folder
+*.pdf
